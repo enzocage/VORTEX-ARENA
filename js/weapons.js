@@ -24,6 +24,8 @@ class WeaponSystem {
         this.projectiles = [];
         this.particles = [];
         this.beams = [];
+        this.decals = []; // Bullet hole & blast mark decals
+        this.maxDecals = 60;
 
         // Viewmodel container attached to camera
         this.viewmodelHolder = new THREE.Group();
@@ -413,9 +415,11 @@ class WeaponSystem {
             if (p.shooter.isPlayer) {
                 window.quakeAudio.announce("Excellent!");
             }
+            this.addImpactDecal(pos, 3.5, 0x003311);
         } else if (p.isRocket) {
             window.quakeAudio.playExplosion();
             this.spawnExplosionVisual(pos);
+            this.addImpactDecal(pos, 2.2, 0x111111);
 
             // Splash Damage & Rocket Jumping
             const radius = p.weapon.splashRadius;
@@ -602,6 +606,23 @@ class WeaponSystem {
             mesh.position.copy(pos);
             this.scene.add(mesh);
             this.particles.push({ mesh, vel, age: 0, maxAge: 0.25 });
+        }
+        this.addImpactDecal(pos, 0.25, 0x111111);
+    }
+
+    addImpactDecal(pos, size = 0.3, color = 0x111111) {
+        const geom = new THREE.PlaneGeometry(size, size);
+        const mat = new THREE.MeshBasicMaterial({ color: color, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.copy(pos);
+        this.scene.add(mesh);
+        this.decals.push(mesh);
+
+        if (this.decals.length > this.maxDecals) {
+            const oldest = this.decals.shift();
+            this.scene.remove(oldest);
+            oldest.geometry.dispose();
+            oldest.material.dispose();
         }
     }
 
