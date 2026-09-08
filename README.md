@@ -1,78 +1,115 @@
-# Quake III Arena - HTML5 WebGL Edition
+# Vortex Arena 🌀
 
-Ein vollwertiger, moderner 3D-Klon des legendären **Quake III Arena** im Browser – entwickelt mit Three.js, Web Audio API und nativer Quake-Physik.
-
-[![Quake 3 Arena Web](https://img.shields.io/badge/Quake%203-Arena%20WebGL-red.svg)](https://github.com/enzocage/quake3)
+[![WebGL 3D](https://img.shields.io/badge/Render-WebGL%20%2F%20Three.js-blue.svg)]()
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Vanilla%20JS)-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Zero-Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen.svg)]()
+[![Platforms](https://img.shields.io/badge/Platform-Browser%20(Chrome%20%7C%20Edge%20%7C%20Firefox)-orange.svg)]()
+
+> **Vortex Arena** ist ein rasanter, vollwertiger 3D-Retro-Arena-Ego-Shooter im Browser, inspiriert von den legendären Arena-FPS-Klassikern der späten 90er Jahre. Das Spiel wurde von Grund auf in **reinem HTML5, WebGL (Three.js) und der Web Audio API** entwickelt – 100 % autark, ohne Build-Tools, Node.js-Server oder externe Frameworks.
 
 ---
 
-## 🔥 Features im Überblick
+## ⚡ Spielfunktionen im Überblick
 
-### 1. 3 Aufsteigende 3D-Arenen
-* **Level 1: The Courtyard** – Klassische gotische Arena mit Steinsäulen, Balkonen und Raketenwerfer im Zentrum.
-* **Level 2: Gothic Temple** – Vertikale Kathedrale mit 4 **Jump-Pads**, MegaHealth (+100), Teleportern und Scharfschützen-Plattformen.
-* **Level 3: The Longest Yard (Q3DM17)** – Die legendäre Weltraum-Karte mit schwebenden Plattformen im All, weiten Jump-Pad-Sprüngen, schwebendem **Quad Damage** und tödlichem Weltraum-Abgrund.
-
-### 2. Echte Quake 3 Movement-Physik (`pmove`)
-* Authentische Bodenreibung (`pm_friction`) und Luftbeschleunigung (`pm_airaccelerate`).
-* **Strafe-Jumping / Bunny-Hopping**: Kontinuierlicher Geschwindigkeitszuwachs (320 bis 650+ UPS) bei synchroner Mausdrehung.
-* **Rocket-Jumping**: Raketenschüsse auf den Boden verleihen gewaltigen Vertikalimpuls.
-* **Jump-Pads**: Exakte parabelförmige Katapultflüge.
-
-### 3. Vollständiges Waffenarsenal (7 Waffen)
-1. **Gauntlet (GNT)**: Rotierende Säge für Nahkampf ("Humiliation!").
-2. **Machinegun (MG)**: Schnellfeuer-Hitscan mit Mündungsfeuer.
-3. **Shotgun (SG)**: Fächerschuss mit 11 Pellets für den Nahkampf.
-4. **Rocket Launcher (RL)**: Projektile mit Rauchpartikelspur, Splash-Damage und Rocket-Jumps.
-5. **Railgun (RG)**: Sofortiger 100-Schaden-Strahl mit originaler **grün-blauer Spiral-Partikelhelix** ("Impressive!").
-6. **Plasma Gun (PG)**: Schnell fliegende blaue Plasmaorbs mit Flächeneffekt.
-7. **BFG10K (BFG)**: Kolossale Superwaffe mit gigantischer grüner Plasmakugel und verheerender 9-Meter-Schockwelle (150 Schaden).
-
-### 4. Integrierter 3D Level-Editor (Taste `E`)
-* Im laufenden Spiel per Taste `E` in den Editor-Modus wechseln.
-* **Raycast-Platzierung mit Raster-Snap** (1m, 2m, 4m).
-* Beliebige Blöcke, Jump-Pads, Teleporter, Waffen, Health, Armor, Quad Damage und Bot-Spawns platzieren.
-* **JSON Map Export & Import**: Eigene Arenen exportieren und teilen.
-
-### 5. Taktische Bot-KI & Predictive Aiming
-* **Vorhalte-Zielen (Predictive Lead)**: Bots antizipieren Bewegungen bei Raketen, Plasma und BFG.
-* **Kreis-Strafing & Bunny-Hop Ausweichen**: Dynamische Ausweichmanöver im Gefecht.
-* **Taktischer Rückzug**: Flucht zu Medipacks bei HP < 35.
-
-### 6. Quake 3 HUD & Spatial 3D Audio
-* Quake 3 Statusleiste mit Rüstung, Gesundheit, Munition.
-* **Animiertes Sarge-Gesicht**: Blickt mit den Augen mit, raucht eine Zigarre, schneidet Schmerzgrimassen und wird bei niedrigen HP blutig.
-* **Hit-Marker & Signature "Ding"-Ton** bei Treffern.
-* **Quake Announcer**: Sprachansagen ("Fight!", "Impressive!", "Humiliation!", "Quad Damage!", "Excellent!").
-* **Einstellungsmenü (Taste `O`)**: FOV-Slider (70° bis 120°), Mausempfindlichkeit, Lautstärke und Fadenkreuz-Stile.
+### 1. Echte VQ3 / CPM Movement-Physik (`pmove`)
+* **Reibungs- & Beschleunigungs-Modell**: Mathematisch exakte Implementation von `pm_friction` und Luftbeschleunigung (`pm_airaccelerate`).
+* **Strafe-Jumping & Bunny-Hopping**: Wer im Sprung schräg vorwärts läuft und die Maus synchron mitdreht, baut kontinuierlich Horizontalgeschwindigkeit auf (sichtbar am Live-Speedometer in UPS von 320 bis weit über 650+ UPS!).
+* **Rocket-Jumping**: Explosionen am Boden verleihen gewaltigen Vertikalimpuls für spektakuläre Höhensprünge.
+* **Flüssigkeits- & Schwimmphysik**: Eintauchen in Wasser/Säure mit realistischer Viskosität, Auftrieb (Leertaste halten) und Tiefen-Platschsounds.
+* **Jump-Pads**: Parabelförmige Katapultflüge mit vorgegebenen Geschwindigkeitsvektoren.
 
 ---
 
-## 🚀 Spiel starten
+### 2. Das 7-Waffen-Arsenal
+1. **Circular Saw (SAW)**: Rotierende Kreissäge für den tödlichen Nahkampf (*Humiliation-Auszeichnung*).
+2. **Machinegun (MG)**: Schnellfeuer-Hitscan mit Mündungsfeuer und Einschlagfunken.
+3. **Combat Shotgun (SG)**: Fächerschuss mit 11 Pellets für verheerenden Nahbereichsschaden.
+4. **Rocket Launcher (RL)**: Projektile mit dynamischem Rauchpartikelschweif, Splash-Damage und Rocket-Jumps.
+5. **Railgun (RG)**: Präziser Scharfschützen-Energiestrahl mit cyanfarbener **Spiral-Partikelhelix** und 100 Sofortschaden (*Impressive-Auszeichnung*).
+6. **Plasma Rifle (PG)**: Schnell fliegende ionisierte Plasma-Orbs mit violettem Leuchtschein.
+7. **Vortex BFG (BFG)**: Kolossale Superwaffe mit gigantischer grüner Plasmakugel und 9-Meter-Schockwelle (150 Schaden).
 
-### Über das PowerShell-Startskript
-```powershell
-cd quake3-arena-web
-.\run_game.ps1
-```
+---
 
-### Direkt im Browser
-Öffne `index.html` direkt in Microsoft Edge oder Google Chrome (funktioniert 100% offline, Three.js ist lokal in `lib/` enthalten).
+### 3. 9 Aufsteigende 3D-Arenen
+
+| Level | Name | Beschreibung & Mechaniken |
+| :---: | :--- | :--- |
+| **1** | **The Courtyard** | Symmetrischer gotischer Steinhof mit Säulen, Balkonen und Raketenwerfer-Podest. |
+| **2** | **Gothic Temple** | Mehrstöckige Kathedrale mit 4 Jump-Pads, MegaHealth und kochendem Lavagraben. |
+| **3** | **The Longest Yard** | Schwebende Plattformen im All über dem endlosen Weltraumabgrund mit Hochgeschwindigkeits-Jump-Pads. |
+| **4** | **Brimstone Core** | Gewaltiger Vulkanreaktor über einem 80x80m großen Lavameer mit 4 Eckbastionen und schwebenden Hängebrücken. |
+| **5** | **Crypt of the Damned** | Düstere Katakomben mit 2 überfluteten Wasserflügeln, Schwimmphysik und Scharfschützen-Galerie. |
+| **6** | **Space Chamber** | Orbitale Station mit Rundlauf-Teleportern, 4 Satelliten-Waffenplattformen und 22m hohem Orbitalschrein. |
+| **7** | **The Iron Citadel** | Gewaltige 3-stufige Eisenfestung (80x80m) mit 4 Wachtürmen (25m Höhe) und Vertikalliften. |
+| **8** | **The Void Sanctuary** | Achteckige Weltraum-Ringarena mit zentralem Leerenloch, schwebendem Quad Damage und Außenfelsen. |
+| **9** | **The Final Altar** | Monumentale Boss-Arena gegen Arena-Lord Xaero mit erhabenem Champion-Thron und 50-Frag-Finale. |
+
+---
+
+### 4. Integrierter 3D In-Game Level-Editor (Taste `E`)
+* Im laufenden Spiel jederzeit per Taste **`E`** zwischen Ego-Perspektive und 3D-Editor umschalten.
+* **Raycast-Platzierung mit Raster-Snap** (1m, 2m oder 4m Raster).
+* Setzen und Entfernen von:
+  * Solid Blocks (2x2x2)
+  * Jump-Pads mit definiertem Impuls
+  * Teleporter-Portalen
+  * Waffen-Spawns, Health, Armor, Quad Damage und Bot-Spawnpunkten.
+* **Rechtsklick**: Platzierten Block sofort löschen.
+* **JSON Export & Import**: Selbst gebaute Arenen mit einem Klick als `.json`-Datei auf die Festplatte exportieren oder vorhandene Maps laden.
+
+---
+
+### 5. Hochentwickelte Bot-KI
+* **Predictive Lead Aiming**: Bots antizipieren die Laufrichtung des Spielers bei langsamen Projektilen (Raketen, Plasma, BFG) und schießen in den Laufweg.
+* **Kreis-Strafing & Bunny-Hop Ausweichen**: Bots umkreisen den Gegner im Gefecht und führen unberechenbare Sprungmanöver aus.
+* **Taktischer Rückzug**: Fällt die Gesundheit unter 35 HP, fliehen Bots gezielt zu entfernten Wegpunkten auf der Suche nach Medipacks.
+
+---
+
+### 6. Grafik, Audio & UI
+* **Dynamische Mündungsfeuer-Weltbeleuchtung**: Schüsse werfen in Echtzeit farbcodierte Lichtreflexe (Cyan, Violett, Smaragdgrün) an Wände und Decken.
+* **Persistente Oberflächen-Decals**: Einschusslöcher und rauchende Explosionskrater bleiben an Wänden haften.
+* **Animierte Lava-Shader**: Prozedural berechnete, blubbernde Lava mit dynamischen Hitzeblasen.
+* **3D Stereo Spatial Audio**: Richtungs- und distanzabhängige Soundortung von Schritten, Schüssen und Schmerzenslauten.
+* **Gladiator-HUD**: Klassische Ziffernfarben, Speedometer in UPS und animiertes Portrait-Gesicht, das bei Treffern Schmerzgrimassen schneidet und bei niedrigen HP blutig wird.
+* **Tournament Medaillen**: Animierte Pop-in Auszeichnungen (*★ IMPRESSIVE! ★*, *★ HUMILIATION! ★*, *★ EXCELLENT! ★*).
+* **In-Game Optionen (Taste `O`)**: Stufenloser FOV-Slider (70° bis 120° Quake-Pro-View), Mausempfindlichkeit, Lautstärke und Fadenkreuz-Stile.
 
 ---
 
 ## 🎮 Steuerung
 
-| Taste | Funktion |
+| Taste | Aktion |
 | :--- | :--- |
-| **WASD / Pfeiltasten** | Bewegen |
-| **Maus** | Umschauen |
-| **Linksklick** | Schießen |
-| **Leertaste** | Springen / Strafe-Jump / Bunnyhop |
-| **1 - 7 / Mausrad** | Waffen wechseln (1: GNT bis 7: BFG) |
-| **TAB** | Scoreboard anzeigen |
-| **Taste E** | 3D Level-Editor an/aus |
-| **Taste O** | Optionen & Settings (FOV, Sens, Sound) |
-| **Rechtsklick im Editor** | Platzierten Block löschen |
+| **W, A, S, D** / **Pfeiltasten** | Fortbewegung |
+| **Maus** | Umschauen (Pointer Lock) |
+| **Linksklick** | Waffe abfeuern |
+| **Leertaste** | Springen / Strafe-Jumping / Auftauchen im Wasser |
+| **1 bis 7** oder **Mausrad** | Waffen wechseln (1: SAW, 2: MG, 3: SG, 4: RL, 5: RG, 6: PG, 7: BFG) |
+| **Taste E** | 3D Level-Editor an / aus |
+| **Taste O** | Optionen & Spieleinstellungen (FOV, Sens, Sound, Crosshair) |
+| **TAB** | Live-Scoreboard anzeigen |
+| **Rechtsklick im Editor** | Ausgewählten Block entfernen |
+
+---
+
+## 🚀 Schnellstart
+
+### 1. Direkt im Browser (100% Offline-fähig)
+Öffne die Datei `index.html` einfach per Doppelklick in einem modernen Webbrowser (**Google Chrome, Microsoft Edge, Firefox, Brave**). Three.js ist lokal im Ordner `lib/` hinterlegt – es ist **keine Internetverbindung erforderlich**.
+
+### 2. Über das mitgelieferte PowerShell-Startskript (Windows)
+```powershell
+cd quake3
+.\run_game.ps1
+```
+*Startet einen internen Server auf `http://localhost:8080` und öffnet das Spiel automatisch im Standardbrowser.*
+
+---
+
+## 📜 Lizenz & Urheberrechtshinweis
+
+Dieses Projekt ist unter der **MIT-Lizenz** lizenziert – freie Nutzung, Modifikation und Weitergabe gestattet.
+
+*Alle Grafiken, Shader, 3D-Geometrien, Texturen, Audio-Synthesen und Soundeffekte wurden prozedural bzw. eigenständig ohne urheberrechtlich geschützte Originaldateien Dritter erstellt.*
