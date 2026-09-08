@@ -133,6 +133,7 @@
                     <button class="level-btn" onclick="selectLevel(3, this)">3. THE LONGEST YARD</button>
                     <button class="level-btn" onclick="selectLevel(4, this)">4. BRIMSTONE CORE</button>
                     <button class="level-btn" onclick="selectLevel(5, this)">5. CRYPT OF THE DAMNED</button>
+                    <button class="level-btn" onclick="selectLevel(6, this)">6. SPACE CHAMBER</button>
                 </div>
             </div>
 
@@ -224,7 +225,7 @@
         }
 
         function advanceNextLevel() {
-            selectedLevelIdx = (selectedLevelIdx >= 5) ? 1 : selectedLevelIdx + 1;
+            selectedLevelIdx = (selectedLevelIdx >= 6) ? 1 : selectedLevelIdx + 1;
             if (game) {
                 game.startLevel(selectedLevelIdx);
             }

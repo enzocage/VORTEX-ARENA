@@ -50,6 +50,8 @@ class LevelManager {
                 return this.buildBrimstoneCore();
             case 5:
                 return this.buildCryptOfTheDamned();
+            case 6:
+                return this.buildSpaceChamber();
             default:
                 return this.buildCourtyard();
         }
@@ -664,6 +666,87 @@ class LevelManager {
             name: "Level 5: Crypt of the Damned",
             fragLimit: 30,
             botCount: 4
+        };
+    }
+
+    // ==========================================
+    // LEVEL 6: SPACE CHAMBER (Orbital Arena)
+    // ==========================================
+    buildSpaceChamber() {
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(4, 4);
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.25, metalness: 0.9 });
+
+        // Cosmic Nebula Skybox
+        const spaceTex = window.quakeTextures.getSpaceSkybox();
+        this.scene.background = spaceTex;
+        this.scene.fog = null;
+
+        const hemi = new THREE.HemisphereLight(0x00e5ff, 0x110033, 0.9);
+        this.levelGroup.add(hemi);
+
+        // Lower Hexagonal Flight Deck (Center, Y=0)
+        this.addBox(0, 0, 0, 28, 1.5, 28, metalMat);
+
+        // 4 Outer Satellite Gun Pods hovering in deep space (North, South, East, West)
+        this.addBox(0, 8, -42, 14, 1.2, 14, metalMat); // North Pod (Railgun)
+        this.addBox(0, 8, 42, 14, 1.2, 14, metalMat);  // South Pod (Rocket Launcher)
+        this.addBox(-42, 8, 0, 14, 1.2, 14, metalMat); // West Pod (BFG10K)
+        this.addBox(42, 8, 0, 14, 1.2, 14, metalMat);  // East Pod (Plasma Gun)
+
+        // Super High Orbital Spire (Center High, Y=22)
+        this.addBox(0, 22, 0, 8, 1.2, 8, metalMat);
+        this.addPickup('quad', 0, 23.2, 0); // Quad Damage high above the cosmos!
+
+        // Giant Teleporter Loop connecting the 4 Satellite Pods
+        this.addTeleporter(0, 9.2, -40, new THREE.Vector3(38, 9.2, 0), -Math.PI / 2); // North -> East
+        this.addTeleporter(40, 9.2, 0, new THREE.Vector3(0, 9.2, 38), Math.PI);        // East -> South
+        this.addTeleporter(0, 9.2, 40, new THREE.Vector3(-38, 9.2, 0), Math.PI / 2);   // South -> West
+        this.addTeleporter(-40, 9.2, 0, new THREE.Vector3(0, 9.2, -38), 0);            // West -> North
+
+        // Orbital Acceleration Jump Pads from Center Deck to Satellite Pods
+        this.addJumpPad(0, 1.5, -10, new THREE.Vector3(0, 20.0, -32.0)); // Center to North
+        this.addJumpPad(0, 1.5, 10, new THREE.Vector3(0, 20.0, 32.0));  // Center to South
+        this.addJumpPad(-10, 1.5, 0, new THREE.Vector3(-32.0, 20.0, 0)); // Center to West
+        this.addJumpPad(10, 1.5, 0, new THREE.Vector3(32.0, 20.0, 0));  // Center to East
+
+        // Super Vertical Jump Pad to Orbital Spire (Quad Damage)
+        this.addJumpPad(0, 1.5, 0, new THREE.Vector3(0, 32.0, 0)); // Sky launch!
+
+        // Weapons
+        this.addPickup('weapon', 0, 9.2, -42, 5); // Railgun
+        this.addPickup('weapon', 0, 9.2, 42, 4);  // Rocket Launcher
+        this.addPickup('weapon', -42, 9.2, 0, 7); // BFG10K
+        this.addPickup('weapon', 42, 9.2, 0, 6);  // Plasma Gun
+        this.addPickup('armor', 0, 1.5, -6, 100);
+        this.addPickup('health', 0, 1.5, 6, 100);
+
+        // Glowing Cosmic Neon Beacons
+        const beacon1 = new THREE.PointLight(0x00e5ff, 4, 30);
+        beacon1.position.set(0, 24, 0);
+        this.levelGroup.add(beacon1);
+
+        // Waypoints
+        this.waypoints = [
+            new THREE.Vector3(0, 1.5, 0),
+            new THREE.Vector3(0, 9.2, -42),
+            new THREE.Vector3(0, 9.2, 42),
+            new THREE.Vector3(-42, 9.2, 0),
+            new THREE.Vector3(42, 9.2, 0),
+            new THREE.Vector3(0, 23.2, 0)
+        ];
+
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(0, 1.5, -6), yaw: 0 },
+            { pos: new THREE.Vector3(0, 1.5, 6), yaw: Math.PI },
+            { pos: new THREE.Vector3(-6, 1.5, 0), yaw: Math.PI / 2 },
+            { pos: new THREE.Vector3(6, 1.5, 0), yaw: -Math.PI / 2 }
+        ];
+
+        return {
+            name: "Level 6: Space Chamber",
+            fragLimit: 35,
+            botCount: 5
         };
     }
 
