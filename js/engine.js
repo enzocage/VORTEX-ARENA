@@ -446,6 +446,11 @@ class GameEngine {
         // 4. Level Pickups, Jump Pads & Triggers
         this.levelManager.update(dt, allEntities, this.player);
 
+        // Update animated textures (Lava, portals)
+        if (window.quakeTextures) {
+            window.quakeTextures.update(performance.now() / 1000);
+        }
+
         // 5. HUD update
         this.updateHUD();
     }

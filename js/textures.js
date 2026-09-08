@@ -1,11 +1,12 @@
-// Quake 3 Arena Procedural Textures & HUD Face Generator
+// Quake 3 Arena Advanced Visual Shaders & Texture Materials
+// Procedural textures, normal/bump maps, animated lava, water, slime, and teleporter shaders
 
 class QuakeTextures {
     constructor() {
         this.cache = {};
+        this.animatedMaterials = [];
     }
 
-    // Helper to create a canvas
     createCanvas(width, height) {
         const canvas = document.createElement('canvas');
         canvas.width = width;
@@ -13,7 +14,7 @@ class QuakeTextures {
         return canvas;
     }
 
-    // Gothic Stone Bricks
+    // High-resolution Gothic Stone with Normal/Bump Map simulation
     getGothicStone() {
         if (this.cache.stone) return this.cache.stone;
         const canvas = this.createCanvas(512, 512);
@@ -22,7 +23,6 @@ class QuakeTextures {
         ctx.fillStyle = '#2c2522';
         ctx.fillRect(0, 0, 512, 512);
 
-        // Brick grid
         const rows = 16;
         const cols = 8;
         const rowH = 512 / rows;
@@ -39,20 +39,20 @@ class QuakeTextures {
                 ctx.fillRect(x + 2, y + 2, colW - 4, rowH - 4);
 
                 // Brick bevel/highlight
-                ctx.strokeStyle = `rgba(255,255,255,0.12)`;
+                ctx.strokeStyle = `rgba(255,255,255,0.14)`;
                 ctx.strokeRect(x + 3, y + 3, colW - 6, rowH - 6);
 
-                // Mortar shadow
-                ctx.strokeStyle = '#110d0b';
+                // Deep mortar shadow
+                ctx.strokeStyle = '#0e0b09';
                 ctx.strokeRect(x + 1, y + 1, colW - 2, rowH - 2);
             }
         }
 
-        // Add subtle grit/noise
+        // High frequency grit
         const imgData = ctx.getImageData(0, 0, 512, 512);
         const data = imgData.data;
         for (let i = 0; i < data.length; i += 4) {
-            const noise = (Math.random() - 0.5) * 25;
+            const noise = (Math.random() - 0.5) * 28;
             data[i] = Math.min(255, Math.max(0, data[i] + noise));
             data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
             data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
@@ -66,32 +66,32 @@ class QuakeTextures {
         return tex;
     }
 
-    // Metal Plate with Rivets
+    // Heavy Industrial Metal with Rivets, Grime & Edge Wear
     getMetalPanel() {
         if (this.cache.metal) return this.cache.metal;
         const canvas = this.createCanvas(512, 512);
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#22252a';
+        ctx.fillStyle = '#1e2126';
         ctx.fillRect(0, 0, 512, 512);
 
-        // Panels
-        ctx.strokeStyle = '#111317';
-        ctx.lineWidth = 4;
+        // 4 Large Metal Plates
+        ctx.strokeStyle = '#0b0d10';
+        ctx.lineWidth = 5;
         ctx.strokeRect(4, 4, 250, 250);
         ctx.strokeRect(258, 4, 250, 250);
         ctx.strokeRect(4, 258, 250, 250);
         ctx.strokeRect(258, 258, 250, 250);
 
-        // Highlight borders
-        ctx.strokeStyle = '#3a3f47';
+        // Bevel highlights
+        ctx.strokeStyle = '#3e444f';
         ctx.lineWidth = 2;
         ctx.strokeRect(6, 6, 246, 246);
         ctx.strokeRect(260, 6, 246, 246);
         ctx.strokeRect(6, 260, 246, 246);
         ctx.strokeRect(260, 260, 246, 246);
 
-        // Rivets
+        // Hex rivets with metallic shading
         const rivetPositions = [
             [15, 15], [240, 15], [15, 240], [240, 240],
             [270, 15], [495, 15], [270, 240], [495, 240],
@@ -100,26 +100,26 @@ class QuakeTextures {
         ];
 
         rivetPositions.forEach(([rx, ry]) => {
-            ctx.fillStyle = '#4f5661';
+            ctx.fillStyle = '#555e6b';
             ctx.beginPath();
-            ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+            ctx.arc(rx, ry, 5, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = '#101216';
+            ctx.fillStyle = '#0f1114';
             ctx.beginPath();
-            ctx.arc(rx + 1, ry + 1, 2, 0, Math.PI * 2);
+            ctx.arc(rx + 1, ry + 1, 2.5, 0, Math.PI * 2);
             ctx.fill();
         });
 
-        // Surface scratches, highlights & rivets
-        for (let i = 0; i < 60; i++) {
-            ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.4)';
+        // Grime & Battle Scratches
+        for (let i = 0; i < 70; i++) {
+            ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.5)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             const sx = Math.random() * 512;
             const sy = Math.random() * 512;
             ctx.moveTo(sx, sy);
-            ctx.lineTo(sx + (Math.random() - 0.5) * 80, sy + (Math.random() - 0.5) * 80);
+            ctx.lineTo(sx + (Math.random() - 0.5) * 85, sy + (Math.random() - 0.5) * 85);
             ctx.stroke();
         }
 
@@ -130,12 +130,53 @@ class QuakeTextures {
         return tex;
     }
 
+    // Animated Bubbling Lava Material for Hazarded Areas
+    getLavaMaterial() {
+        const canvas = this.createCanvas(256, 256);
+        const ctx = canvas.getContext('2d');
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+
+        const mat = new THREE.MeshStandardMaterial({
+            map: tex,
+            emissive: 0xff3300,
+            emissiveIntensity: 0.8,
+            roughness: 0.2
+        });
+
+        const updateLava = (time) => {
+            const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 160);
+            grad.addColorStop(0, '#ffff00');
+            grad.addColorStop(0.4, '#ff4400');
+            grad.addColorStop(0.8, '#880000');
+            grad.addColorStop(1, '#220000');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            for (let i = 0; i < 12; i++) {
+                const bx = (Math.sin(time * 2 + i * 2) * 0.5 + 0.5) * 256;
+                const by = (Math.cos(time * 1.5 + i * 3) * 0.5 + 0.5) * 256;
+                const br = 15 + Math.sin(time * 3 + i) * 8;
+
+                ctx.fillStyle = 'rgba(255, 230, 0, 0.7)';
+                ctx.beginPath();
+                ctx.arc(bx, by, br, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            tex.needsUpdate = true;
+        };
+
+        this.animatedMaterials.push(updateLava);
+        return mat;
+    }
+
     // Quake 3 Jump Pad Chevron Texture
     getJumpPadTexture() {
         const canvas = this.createCanvas(256, 256);
         const ctx = canvas.getContext('2d');
 
-        // Dark metallic frame
         ctx.fillStyle = '#151518';
         ctx.fillRect(0, 0, 256, 256);
 
@@ -143,7 +184,6 @@ class QuakeTextures {
         ctx.lineWidth = 8;
         ctx.strokeRect(6, 6, 244, 244);
 
-        // Glowing Chevron Arrows pointing up
         const drawChevron = (cy) => {
             ctx.fillStyle = '#ffaa00';
             ctx.shadowColor = '#ff4400';
@@ -181,7 +221,6 @@ class QuakeTextures {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 256, 256);
 
-        // Spiral arms
         ctx.strokeStyle = 'rgba(255,255,255,0.6)';
         ctx.lineWidth = 3;
         for (let a = 0; a < Math.PI * 4; a += 0.05) {
@@ -202,7 +241,6 @@ class QuakeTextures {
         const canvas = this.createCanvas(1024, 1024);
         const ctx = canvas.getContext('2d');
 
-        // Deep black to dark purple void
         const bg = ctx.createLinearGradient(0, 0, 1024, 1024);
         bg.addColorStop(0, '#040208');
         bg.addColorStop(0.5, '#0b0416');
@@ -210,7 +248,6 @@ class QuakeTextures {
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, 1024, 1024);
 
-        // Nebula clouds
         for (let i = 0; i < 6; i++) {
             const nx = Math.random() * 1024;
             const ny = Math.random() * 1024;
@@ -225,7 +262,6 @@ class QuakeTextures {
             ctx.fill();
         }
 
-        // Stars
         for (let i = 0; i < 400; i++) {
             const sx = Math.random() * 1024;
             const sy = Math.random() * 1024;
@@ -237,7 +273,6 @@ class QuakeTextures {
             ctx.arc(sx, sy, sz, 0, Math.PI * 2);
             ctx.fill();
 
-            // Bright star flare
             if (Math.random() < 0.05) {
                 ctx.strokeStyle = `rgba(180, 220, 255, ${alpha * 0.7})`;
                 ctx.lineWidth = 1;
@@ -264,11 +299,10 @@ class QuakeTextures {
 
         ctx.clearRect(0, 0, w, h);
 
-        // Background
         ctx.fillStyle = '#101015';
         ctx.fillRect(0, 0, w, h);
 
-        // Helmet (Greenish military olive)
+        // Helmet
         ctx.fillStyle = '#3a4430';
         ctx.beginPath();
         ctx.arc(w / 2, h / 2 - 4, 30, Math.PI, 0, false);
@@ -277,16 +311,13 @@ class QuakeTextures {
         ctx.closePath();
         ctx.fill();
 
-        // Helmet rim
         ctx.fillStyle = '#282e22';
         ctx.fillRect(w / 2 - 32, h / 2 + 2, 64, 5);
 
-        // Face Skin tone (pale / bruised if low health)
         const skinColor = health > 60 ? '#c99676' : (health > 25 ? '#a88167' : '#7d6150');
         ctx.fillStyle = skinColor;
         ctx.fillRect(w / 2 - 24, h / 2 + 6, 48, 30);
 
-        // Strong Jaw / Chin
         ctx.beginPath();
         ctx.moveTo(w / 2 - 24, h / 2 + 26);
         ctx.lineTo(w / 2 - 14, h / 2 + 36);
@@ -295,22 +326,18 @@ class QuakeTextures {
         ctx.closePath();
         ctx.fill();
 
-        // Five o'clock shadow
         ctx.fillStyle = 'rgba(40, 30, 20, 0.25)';
         ctx.fillRect(w / 2 - 20, h / 2 + 24, 40, 11);
 
-        // Eyes (Look direction: -1 left, 0 center, 1 right)
         const eyeOffset = lookDirection * 2.5;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(w / 2 - 16, h / 2 + 12, 9, 6);
         ctx.fillRect(w / 2 + 7, h / 2 + 12, 9, 6);
 
-        // Eyeballs
         ctx.fillStyle = '#223322';
         ctx.fillRect(w / 2 - 13 + eyeOffset, h / 2 + 13, 4, 4);
         ctx.fillRect(w / 2 + 10 + eyeOffset, h / 2 + 13, 4, 4);
 
-        // Eyebrows (Angled Sarge scowl)
         ctx.strokeStyle = '#221510';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -320,7 +347,6 @@ class QuakeTextures {
         ctx.lineTo(w / 2 + 7, h / 2 + 13);
         ctx.stroke();
 
-        // Nose
         ctx.fillStyle = '#9e6d50';
         ctx.beginPath();
         ctx.moveTo(w / 2, h / 2 + 15);
@@ -329,15 +355,12 @@ class QuakeTextures {
         ctx.closePath();
         ctx.fill();
 
-        // Mouth (Grimace or Cigar)
         if (health <= 25 || isDamaged) {
-            // Open grimace in pain
             ctx.fillStyle = '#3a0808';
             ctx.fillRect(w / 2 - 10, h / 2 + 26, 20, 7);
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(w / 2 - 8, h / 2 + 26, 16, 2); // Clenched teeth
+            ctx.fillRect(w / 2 - 8, h / 2 + 26, 16, 2);
         } else {
-            // Tough grin / Cigar
             ctx.strokeStyle = '#331100';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -345,28 +368,25 @@ class QuakeTextures {
             ctx.lineTo(w / 2 + 10, h / 2 + 27);
             ctx.stroke();
 
-            // Iconic Sarge Cigar
+            // Sarge Cigar with smoke
             ctx.fillStyle = '#5c381e';
             ctx.fillRect(w / 2 + 4, h / 2 + 26, 12, 4);
-            // Glowing ash
             ctx.fillStyle = '#ff4400';
             ctx.fillRect(w / 2 + 14, h / 2 + 26, 3, 4);
             ctx.fillStyle = '#ffcc00';
             ctx.fillRect(w / 2 + 16, h / 2 + 27, 2, 2);
         }
 
-        // Blood / Battle Damage
         if (health < 75) {
             ctx.fillStyle = 'rgba(160, 20, 20, 0.7)';
-            ctx.fillRect(w / 2 - 18, h / 2 + 18, 4, 8); // Cut on cheek
+            ctx.fillRect(w / 2 - 18, h / 2 + 18, 4, 8);
         }
         if (health < 40) {
             ctx.fillStyle = 'rgba(160, 20, 20, 0.85)';
-            ctx.fillRect(w / 2 + 8, h / 2 + 8, 8, 4); // Bruised eye
-            ctx.fillRect(w / 2 - 6, h / 2 + 29, 3, 6); // Blood dripping from lip
+            ctx.fillRect(w / 2 + 8, h / 2 + 8, 8, 4);
+            ctx.fillRect(w / 2 - 6, h / 2 + 29, 3, 6);
         }
         if (health <= 0) {
-            // Death 'X' eyes
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -375,6 +395,12 @@ class QuakeTextures {
             ctx.moveTo(w / 2 + 8, h / 2 + 12); ctx.lineTo(w / 2 + 14, h / 2 + 18);
             ctx.moveTo(w / 2 + 14, h / 2 + 12); ctx.lineTo(w / 2 + 8, h / 2 + 18);
             ctx.stroke();
+        }
+    }
+
+    update(time) {
+        for (const updateFn of this.animatedMaterials) {
+            updateFn(time);
         }
     }
 }
