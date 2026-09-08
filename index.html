@@ -126,10 +126,11 @@
 
             <div style="margin: 15px 0;">
                 <label style="color:#ffd700; font-size: 22px; display:block; margin-bottom: 8px;">WÄHLE DAS LEVEL:</label>
-                <div class="level-selector-row">
+                <div class="level-selector-row" style="flex-wrap: wrap;">
                     <button class="level-btn selected" onclick="selectLevel(1, this)">1. THE COURTYARD</button>
                     <button class="level-btn" onclick="selectLevel(2, this)">2. GOTHIC TEMPLE</button>
-                    <button class="level-btn" onclick="selectLevel(3, this)">3. THE LONGEST YARD (Q3DM17)</button>
+                    <button class="level-btn" onclick="selectLevel(3, this)">3. THE LONGEST YARD</button>
+                    <button class="level-btn" onclick="selectLevel(4, this)">4. BRIMSTONE CORE</button>
                 </div>
             </div>
 
@@ -221,7 +222,7 @@
         }
 
         function advanceNextLevel() {
-            selectedLevelIdx = (selectedLevelIdx >= 3) ? 1 : selectedLevelIdx + 1;
+            selectedLevelIdx = (selectedLevelIdx >= 4) ? 1 : selectedLevelIdx + 1;
             if (game) {
                 game.startLevel(selectedLevelIdx);
             }

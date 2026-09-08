@@ -46,6 +46,8 @@ class LevelManager {
                 return this.buildGothicTemple();
             case 3:
                 return this.buildTheLongestYard();
+            case 4:
+                return this.buildBrimstoneCore();
             default:
                 return this.buildCourtyard();
         }
@@ -460,6 +462,94 @@ class LevelManager {
             name: "Level 3: The Longest Yard (Q3DM17)",
             fragLimit: 20,
             botCount: 3
+        };
+    }
+
+    // ==========================================
+    // LEVEL 4: BRIMSTONE CORE (Volcanic Reactor)
+    // ==========================================
+    buildBrimstoneCore() {
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(4, 4);
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.3, metalness: 0.85 });
+        const lavaMat = window.quakeTextures.getLavaMaterial();
+
+        this.scene.background = new THREE.Color(0x220502);
+        this.scene.fog = new THREE.FogExp2(0x220502, 0.015);
+
+        const hemi = new THREE.HemisphereLight(0xff6633, 0x110500, 0.8);
+        this.levelGroup.add(hemi);
+
+        // Huge Boiling Lava Lake Floor (80x80)
+        this.addBox(0, -2, 0, 80, 1, 80, lavaMat);
+        const lavaCoreLight = new THREE.PointLight(0xff4400, 4, 30);
+        lavaCoreLight.position.set(0, 4, 0);
+        this.levelGroup.add(lavaCoreLight);
+
+        // High Outer Metal Blast Walls
+        this.addBox(0, 0, -40, 80, 18, 2, metalMat);
+        this.addBox(0, 0, 40, 80, 18, 2, metalMat);
+        this.addBox(-40, 0, 0, 2, 18, 80, metalMat);
+        this.addBox(40, 0, 0, 2, 18, 80, metalMat);
+
+        // 4 Raised Corner Bastions (Y=6)
+        [[-25, -25], [25, -25], [-25, 25], [25, 25]].forEach(([cx, cz]) => {
+            this.addBox(cx, 0, cz, 16, 6, 16, metalMat);
+        });
+
+        // Suspended Cross Bridges Connecting Bastions (Y=6)
+        this.addBox(0, 6, -25, 34, 0.8, 5, metalMat); // North Bridge
+        this.addBox(0, 6, 25, 34, 0.8, 5, metalMat);  // South Bridge
+        this.addBox(-25, 6, 0, 5, 0.8, 34, metalMat); // West Bridge
+        this.addBox(25, 6, 0, 5, 0.8, 34, metalMat);  // East Bridge
+
+        // Central Reactor Island (Y=2)
+        this.addBox(0, 0, 0, 18, 3, 18, metalMat);
+
+        // High Central BFG Shrine (Y=11)
+        this.addBox(0, 11, 0, 6, 0.8, 6, metalMat);
+        this.addPickup('weapon', 0, 12.0, 0, 7); // THE BFG10K!
+
+        // Mega Jump Pads launching from Corner Bastions straight onto the High BFG Shrine!
+        this.addJumpPad(-20, 6, -20, new THREE.Vector3(16, 18, 16));
+        this.addJumpPad(20, 6, -20, new THREE.Vector3(-16, 18, 16));
+        this.addJumpPad(-20, 6, 20, new THREE.Vector3(16, 18, -16));
+        this.addJumpPad(20, 6, 20, new THREE.Vector3(-16, 18, -16));
+
+        // Jump Pads from Center Island to Corner Bastions
+        this.addJumpPad(0, 3, 0, new THREE.Vector3(0, 16, 22));
+
+        // Pickups
+        this.addPickup('armor', 0, 3.5, 0, 100); // Red Armor Center
+        this.addPickup('quad', 25, 6.8, -25);    // Quad Damage on North-East Bastion!
+        this.addPickup('health', -25, 6.8, 25, 100); // MegaHealth on South-West Bastion!
+        this.addPickup('weapon', -25, 6.8, -25, 5); // Railgun North-West
+        this.addPickup('weapon', 25, 6.8, 25, 4);   // Rocket Launcher South-East
+
+        // Waypoints for AI
+        this.waypoints = [
+            new THREE.Vector3(0, 3, 0),
+            new THREE.Vector3(0, 12, 0),
+            new THREE.Vector3(-25, 6.8, -25),
+            new THREE.Vector3(25, 6.8, -25),
+            new THREE.Vector3(-25, 6.8, 25),
+            new THREE.Vector3(25, 6.8, 25),
+            new THREE.Vector3(0, 6.8, -25),
+            new THREE.Vector3(0, 6.8, 25)
+        ];
+
+        // Spawn points
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(-22, 6.8, -22), yaw: Math.PI / 4 },
+            { pos: new THREE.Vector3(22, 6.8, -22), yaw: -Math.PI / 4 },
+            { pos: new THREE.Vector3(-22, 6.8, 22), yaw: 3 * Math.PI / 4 },
+            { pos: new THREE.Vector3(22, 6.8, 22), yaw: -3 * Math.PI / 4 }
+        ];
+
+        return {
+            name: "Level 4: Brimstone Core",
+            fragLimit: 25,
+            botCount: 4
         };
     }
 
