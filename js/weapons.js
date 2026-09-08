@@ -169,9 +169,24 @@ class WeaponSystem {
         this.recoilZ = 0.08;
         this.recoilRot = 0.06;
 
-        // Trigger muzzle flash
-        this.muzzleLight.intensity = 2.5;
-        setTimeout(() => { this.muzzleLight.intensity = 0; }, 60);
+        // Dynamic Muzzle Flash Light color based on weapon
+        let flashColor = 0xffaa22;
+        if (weapon.id === 5) flashColor = 0x00ffff; // Railgun cyan
+        else if (weapon.id === 6) flashColor = 0xaa00ff; // Plasma purple
+        else if (weapon.id === 7) flashColor = 0x00ff44; // BFG green
+
+        this.muzzleLight.color.setHex(flashColor);
+        this.muzzleLight.intensity = (weapon.id === 7) ? 6.0 : 3.0;
+        
+        // Also cast dynamic flash light in the world at shooter position
+        const worldFlash = new THREE.PointLight(flashColor, 3.5, 12);
+        const flashOrigin = shooter.isPlayer ? this.camera.position.clone() : shooter.position.clone().add(new THREE.Vector3(0, 1.4, 0));
+        worldFlash.position.copy(flashOrigin);
+        this.scene.add(worldFlash);
+        setTimeout(() => {
+            this.muzzleLight.intensity = 0;
+            this.scene.remove(worldFlash);
+        }, 65);
 
         // Sound effect
         window.quakeAudio.playWeaponFire(weapon.id);
