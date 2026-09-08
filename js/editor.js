@@ -39,18 +39,20 @@ class LevelEditor {
         div.id = 'editor-overlay';
         div.style.cssText = `
             position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(15, 15, 22, 0.92);
+            top: clamp(10px, 2vh, 25px);
+            left: clamp(10px, 2vw, 25px);
+            background: rgba(15, 15, 22, 0.94);
             border: 2px solid #00e5ff;
             box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
             border-radius: 8px;
-            padding: 15px;
+            padding: clamp(10px, 1.8vh, 16px);
             z-index: 200;
             display: none;
             color: #fff;
             font-family: 'Teko', sans-serif;
-            width: 260px;
+            width: min(88vw, 280px);
+            max-height: 90vh;
+            overflow-y: auto;
         `;
 
         div.innerHTML = `
