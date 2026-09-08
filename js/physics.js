@@ -13,6 +13,12 @@ class QuakePhysics {
         this.jumpSpeed = 8.5;
         this.stepHeight = 0.5;
 
+        // Water & Hazard physics parameters
+        this.waterFriction = 3.5;
+        this.waterSpeed = 5.5;
+        this.waterGravity = 6.0;
+        this.playerInWater = false;
+
         // Player AABB dimensions
         this.playerRadius = 0.5;
         this.playerHeight = 1.8;
@@ -21,6 +27,9 @@ class QuakePhysics {
     // Process a single physics tick for an entity (player or bot)
     updateEntity(entity, input, worldColliders, dt) {
         if (!entity.alive) return;
+
+        // Check if entity is submerged in water/hazard
+        entity.inWater = this.checkWater(entity, worldColliders);
 
         // Determine ground status
         entity.onGround = this.checkGround(entity, worldColliders);
@@ -38,16 +47,17 @@ class QuakePhysics {
             wishDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), entity.yaw);
         }
 
-        // Apply Jump
-        if (input.jump && entity.onGround) {
-            entity.velocity.y = this.jumpSpeed;
-            entity.onGround = false;
-            if (entity.isPlayer) {
-                window.quakeAudio.playJump();
+        if (entity.inWater) {
+            this.waterMove(entity, wishDir, input.jump, dt);
+        } else if (entity.onGround) {
+            // Apply Jump
+            if (input.jump) {
+                entity.velocity.y = this.jumpSpeed;
+                entity.onGround = false;
+                if (entity.isPlayer) {
+                    window.quakeAudio.playJump();
+                }
             }
-        }
-
-        if (entity.onGround) {
             this.groundMove(entity, wishDir, dt);
         } else {
             this.airMove(entity, wishDir, dt);
@@ -62,6 +72,41 @@ class QuakePhysics {
         if (entity.position.y < -35) {
             entity.takeDamage(999, 'the void', 0);
         }
+    }
+
+    // Water movement (swimming & buoyancy)
+    waterMove(entity, wishDir, isJumping, dt) {
+        // Fluid drag
+        const speed = entity.velocity.length();
+        if (speed > 0.001) {
+            const drop = speed * this.waterFriction * dt;
+            const newSpeed = Math.max(0, speed - drop);
+            entity.velocity.multiplyScalar(newSpeed / speed);
+        }
+
+        // Swimming thrust
+        this.accelerate(entity, wishDir, this.waterSpeed, 6.0, dt);
+
+        // Swim up when holding jump
+        if (isJumping) {
+            entity.velocity.y = Math.min(6.0, entity.velocity.y + 12.0 * dt);
+        } else {
+            // Gentle buoyancy
+            entity.velocity.y -= this.waterGravity * dt;
+        }
+    }
+
+    checkWater(entity, colliders) {
+        for (const col of colliders) {
+            if (col.isWater) {
+                if (entity.position.x > col.min.x && entity.position.x < col.max.x &&
+                    entity.position.y < col.max.y && entity.position.y + this.playerHeight > col.min.y &&
+                    entity.position.z > col.min.z && entity.position.z < col.max.z) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // Quake Ground Movement with Friction
