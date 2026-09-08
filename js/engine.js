@@ -283,6 +283,25 @@ class GameEngine {
         this.updateHUD();
     }
 
+    showMedal(text, subtitle = '') {
+        const container = document.getElementById('medal-container');
+        if (!container) return;
+
+        const badge = document.createElement('div');
+        badge.className = 'quake-medal';
+        badge.innerHTML = `★ ${text} ★`;
+        container.appendChild(badge);
+
+        setTimeout(() => {
+            badge.style.transition = 'opacity 0.4s, transform 0.4s';
+            badge.style.opacity = '0';
+            badge.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (badge.parentNode) badge.parentNode.removeChild(badge);
+            }, 400);
+        }, 2200);
+    }
+
     addKillfeed(killer, victim, weapon) {
         const feed = document.getElementById('killfeed');
         const item = document.createElement('div');

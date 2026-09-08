@@ -220,6 +220,7 @@ class WeaponSystem {
                         this.consecutiveRailHits++;
                         if (this.consecutiveRailHits >= 2) {
                             window.quakeAudio.announce("Impressive!");
+                            if (window.gameEngine) window.gameEngine.showMedal("IMPRESSIVE!");
                             this.consecutiveRailHits = 0;
                         }
                     } else {
@@ -239,6 +240,7 @@ class WeaponSystem {
                 const hit = this.executeHitscan(shootPos, shootDir, weapon.damage * damageMult, weapon.range, shooter, targets, colliders, false);
                 if (hit && hit.dead && shooter.isPlayer) {
                     window.quakeAudio.announce("Humiliation!");
+                    if (window.gameEngine) window.gameEngine.showMedal("HUMILIATION!");
                 }
             }
         } else {
