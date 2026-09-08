@@ -1,4 +1,4 @@
-// Quake 3 Arena Bot AI & Character Rendering
+// Quake 3 Arena Bot AI & Character Rendering (Enhanced Combat & Tactics)
 
 class QuakeBot {
     constructor(scene, name, skinColor = 0x336699) {
@@ -21,15 +21,16 @@ class QuakeBot {
         this.onGround = false;
         this.aimDirection = new THREE.Vector3(0, 0, -1);
 
-        // AI States
+        // AI States: ROAM, COMBAT, RETREAT, FLANK
         this.target = null;
         this.currentWaypoint = null;
-        this.state = 'ROAM'; // ROAM, COMBAT, RETREAT
+        this.state = 'ROAM';
         this.reactionTimer = 0;
         this.strafeTimer = 0;
         this.strafeDir = 1;
-        this.shootCooldown = 0.5;
-        this.activeWeaponId = 4; // Rocket launcher
+        this.circleStrafing = false;
+        this.shootCooldown = 0.4;
+        this.activeWeaponId = 4; // Default Rocket launcher
 
         // 3D Mesh Representation
         this.mesh = this.createBotMesh(skinColor);
@@ -118,6 +119,23 @@ class QuakeBot {
 
         this.health -= amount;
 
+        // Sound position calculation
+        if (window.gameEngine && window.gameEngine.player) {
+            window.quakeAudio.playPositional(
+                (gain) => {
+                    const osc = window.quakeAudio.ctx.createOscillator();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, window.quakeAudio.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(70, window.quakeAudio.ctx.currentTime + 0.15);
+                    osc.connect(gain);
+                    osc.start();
+                    osc.stop(window.quakeAudio.ctx.currentTime + 0.15);
+                },
+                this.position,
+                window.gameEngine.player.position
+            );
+        }
+
         if (this.health <= 0) {
             this.die(weaponName, attacker);
         }
@@ -135,10 +153,9 @@ class QuakeBot {
         if (attacker && attacker !== this) {
             attacker.frags++;
         } else {
-            this.frags = Math.max(0, this.frags - 1); // Suicide penalty
+            this.frags = Math.max(0, this.frags - 1);
         }
 
-        // Respawn after 2 seconds
         setTimeout(() => {
             if (window.gameEngine && window.gameEngine.levelManager) {
                 this.respawn(window.gameEngine.levelManager.spawnPoints);
@@ -164,7 +181,7 @@ class QuakeBot {
         this.input.right = false;
         this.input.jump = false;
 
-        // Choose Target (Player or other bots)
+        // Find Closest Target
         let closestTarget = null;
         let closestDist = Infinity;
         for (const ent of allEntities) {
@@ -177,18 +194,19 @@ class QuakeBot {
         }
         this.target = closestTarget;
 
-        // Determine AI State
-        if (this.health < 30) {
+        // State Machine
+        if (this.health < 35) {
             this.state = 'RETREAT';
-        } else if (this.target && closestDist < 35) {
+        } else if (this.target && closestDist < 38) {
             this.state = 'COMBAT';
         } else {
             this.state = 'ROAM';
         }
 
-        // Execute State Behavior
         if (this.state === 'COMBAT' && this.target) {
             this.handleCombat(dt, closestDist, weaponSystem, levelColliders, allEntities);
+        } else if (this.state === 'RETREAT') {
+            this.handleRetreat(dt, waypoints);
         } else {
             this.handleRoaming(dt, waypoints);
         }
@@ -198,55 +216,60 @@ class QuakeBot {
     }
 
     handleCombat(dt, dist, weaponSystem, colliders, allEntities) {
-        // Look at target
+        // Aiming with predictive target tracking
         const targetEye = this.target.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        
+        // Predictive lead for projectile weapons (Rocket / Plasma / BFG)
+        const projSpeed = (this.activeWeaponId === 4) ? 38 : ((this.activeWeaponId === 7) ? 28 : 50);
+        const timeToHit = dist / projSpeed;
+        const predictedPos = targetEye.clone().add(this.target.velocity.clone().multiplyScalar(timeToHit * 0.7));
+
         const botEye = this.position.clone().add(new THREE.Vector3(0, 1.2, 0));
-        const toTarget = targetEye.clone().sub(botEye);
+        const toTarget = predictedPos.sub(botEye);
 
         this.yaw = Math.atan2(-toTarget.x, -toTarget.z);
         this.aimDirection.copy(toTarget).normalize();
 
-        // Strafe dodging
+        // Circle-strafing and jumping
         this.strafeTimer -= dt;
         if (this.strafeTimer <= 0) {
-            this.strafeTimer = 0.4 + Math.random() * 0.8;
-            this.strafeDir = Math.random() > 0.5 ? 1 : -1;
-            // Chance to bunny-jump
-            if (Math.random() < 0.4) {
-                this.input.jump = true;
+            this.strafeTimer = 0.35 + Math.random() * 0.65;
+            this.strafeDir = Math.random() > 0.4 ? this.strafeDir : -this.strafeDir;
+            if (Math.random() < 0.5 && this.onGround) {
+                this.input.jump = true; // Bunny hop dodge
             }
         }
 
         if (this.strafeDir > 0) this.input.right = true;
         else this.input.left = true;
 
-        // Maintain optimal range (~12 units)
-        if (dist > 18) this.input.forward = true;
+        // Distance control
+        if (dist > 20) this.input.forward = true;
         else if (dist < 6) this.input.backward = true;
 
-        // Weapon Selection AI
-        if (dist > 25) {
-            this.activeWeaponId = 5; // Railgun at long range
-        } else if (dist > 8) {
-            this.activeWeaponId = 4; // Rocket launcher at medium
+        // Adaptive Weapon Switching
+        if (dist > 26) {
+            this.activeWeaponId = 5; // Railgun
+        } else if (dist > 14) {
+            this.activeWeaponId = (Math.random() < 0.3) ? 7 : 4; // BFG or Rocket Launcher
+        } else if (dist > 7) {
+            this.activeWeaponId = 6; // Plasma Gun
         } else {
-            this.activeWeaponId = 3; // Shotgun up close
+            this.activeWeaponId = 3; // Shotgun point-blank
         }
 
-        // Shoot at target with slight delay
+        // Fire rate & execution
         this.shootCooldown -= dt;
         if (this.shootCooldown <= 0) {
             const hasQuad = (this.quadTime > 0);
             weaponSystem.currentWeaponId = this.activeWeaponId;
             weaponSystem.fire(this, allEntities, colliders, hasQuad);
-            this.shootCooldown = 0.6 + Math.random() * 0.6;
+            this.shootCooldown = 0.45 + Math.random() * 0.55;
         }
     }
 
-    handleRoaming(dt, waypoints) {
-        if (waypoints.length === 0) return;
-
-        // Select or follow waypoint
+    handleRetreat(dt, waypoints) {
+        // Run away from target towards farthest waypoint
         if (!this.currentWaypoint || this.position.distanceTo(this.currentWaypoint) < 3.0) {
             this.currentWaypoint = waypoints[Math.floor(Math.random() * waypoints.length)];
         }
@@ -256,9 +279,23 @@ class QuakeBot {
         if (toWp.lengthSq() > 0.01) {
             this.yaw = Math.atan2(-toWp.x, -toWp.z);
             this.input.forward = true;
+            if (this.onGround && Math.random() < 0.1) this.input.jump = true;
+        }
+    }
 
-            // Jump if facing obstacle or going up
-            if (Math.random() < 0.05 && this.onGround) {
+    handleRoaming(dt, waypoints) {
+        if (waypoints.length === 0) return;
+
+        if (!this.currentWaypoint || this.position.distanceTo(this.currentWaypoint) < 3.0) {
+            this.currentWaypoint = waypoints[Math.floor(Math.random() * waypoints.length)];
+        }
+
+        const toWp = this.currentWaypoint.clone().sub(this.position);
+        toWp.y = 0;
+        if (toWp.lengthSq() > 0.01) {
+            this.yaw = Math.atan2(-toWp.x, -toWp.z);
+            this.input.forward = true;
+            if (Math.random() < 0.04 && this.onGround) {
                 this.input.jump = true;
             }
         }
@@ -269,12 +306,11 @@ class BotManager {
     constructor(scene) {
         this.scene = scene;
         this.bots = [];
-        this.botNames = ['Sarge', 'Visor', 'Hunter', 'Crash', 'Phobos', 'Bones'];
-        this.skinColors = [0x336633, 0x553333, 0x334466, 0x664422, 0x443366];
+        this.botNames = ['Sarge', 'Visor', 'Hunter', 'Crash', 'Phobos', 'Bones', 'Slash', 'Xaero'];
+        this.skinColors = [0x336633, 0x553333, 0x334466, 0x664422, 0x443366, 0x224444];
     }
 
     spawnBots(count, spawnPoints) {
-        // Clear existing bots
         this.bots.forEach(b => {
             this.scene.remove(b.mesh);
         });
