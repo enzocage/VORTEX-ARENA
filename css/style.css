@@ -1,0 +1,512 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=VT323&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #030305;
+    font-family: 'Teko', sans-serif;
+    color: #fff;
+}
+
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Screen overlay vignettes */
+#damage-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 50%, rgba(220, 20, 20, 0.7) 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.08s ease-out;
+}
+
+#quad-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, transparent 60%, rgba(40, 120, 255, 0.4) 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.2s ease;
+}
+
+/* Crosshair */
+#crosshair-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.crosshair {
+    width: 24px;
+    height: 24px;
+    position: relative;
+}
+
+.crosshair::before, .crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(0, 255, 128, 0.9);
+    box-shadow: 0 0 4px #00ff80;
+}
+
+.crosshair::before {
+    top: 11px;
+    left: 2px;
+    width: 20px;
+    height: 2px;
+}
+
+.crosshair::after {
+    top: 2px;
+    left: 11px;
+    width: 2px;
+    height: 20px;
+}
+
+.crosshair .center-dot {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 4px;
+    height: 4px;
+    background: #ffff00;
+    border-radius: 50%;
+}
+
+/* Hit marker */
+#hit-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    pointer-events: none;
+    z-index: 11;
+    opacity: 0;
+    transition: opacity 0.06s ease;
+}
+
+#hit-marker::before, #hit-marker::after {
+    content: '';
+    position: absolute;
+    background: #ff2200;
+}
+#hit-marker::before {
+    top: 14px; left: 4px; width: 24px; height: 4px;
+}
+#hit-marker::after {
+    top: 4px; left: 14px; width: 4px; height: 24px;
+}
+
+/* Top UI / Announcer Banner */
+#announcer-banner {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 52px;
+    letter-spacing: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 80, 0, 0.9), 3px 3px 0 #000;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 20;
+    text-align: center;
+}
+
+/* Killfeed & Notifications */
+#killfeed {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.killfeed-item {
+    background: rgba(10, 10, 15, 0.75);
+    border-left: 3px solid #ff5500;
+    padding: 3px 12px;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: #eee;
+    text-shadow: 1px 1px 2px #000;
+    animation: fadeSlideIn 0.2s ease-out;
+}
+
+.killfeed-killer { color: #00ff88; font-weight: bold; }
+.killfeed-victim { color: #ff4444; font-weight: bold; }
+.killfeed-weapon { color: #ffbb00; margin: 0 6px; font-style: italic; }
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Speedometer / Strafe meter */
+#speedometer {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    color: #00ffcc;
+    text-shadow: 0 0 6px rgba(0, 255, 200, 0.6);
+    pointer-events: none;
+    z-index: 15;
+    background: rgba(0,0,0,0.4);
+    padding: 2px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,255,200,0.2);
+}
+
+/* Quake 3 HUD - Bottom Bar */
+#hud-bottom {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 820px;
+    height: 90px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(30, 30, 35, 0.85) 0%, rgba(10, 10, 15, 0.95) 100%);
+    border: 2px solid #555;
+    border-top: 3px solid #998844;
+    box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.2);
+    border-radius: 6px;
+    padding: 0 15px;
+}
+
+.hud-stat-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 200px;
+}
+
+.hud-icon {
+    width: 44px;
+    height: 44px;
+    filter: drop-shadow(0 0 5px rgba(255, 170, 0, 0.6));
+}
+
+.hud-value {
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 1px;
+    font-family: 'Teko', sans-serif;
+    text-shadow: 2px 2px 0 #000, 0 0 10px currentColor;
+}
+
+#armor-val { color: #ffbb00; }
+#health-val { color: #00ff88; }
+#ammo-val { color: #ff5533; }
+
+/* Middle Sarge Face Container */
+#hud-face-container {
+    width: 74px;
+    height: 74px;
+    background: #000;
+    border: 2px solid #666;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 8px #000;
+}
+
+#hud-face-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Weapon Selection Bar */
+#weapon-bar {
+    position: absolute;
+    bottom: 110px;
+    right: 25px;
+    display: flex;
+    gap: 6px;
+    z-index: 20;
+    background: rgba(10,10,15,0.8);
+    padding: 6px;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+.weapon-slot {
+    width: 48px;
+    height: 48px;
+    background: rgba(30,30,40,0.9);
+    border: 2px solid #555;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #888;
+    position: relative;
+    transition: all 0.15s;
+}
+
+.weapon-slot.active {
+    border-color: #ffd700;
+    background: rgba(90, 70, 20, 0.8);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,215,0,0.5);
+    transform: translateY(-4px);
+}
+
+.weapon-slot.disabled {
+    opacity: 0.3;
+}
+
+.weapon-key {
+    position: absolute;
+    top: 1px;
+    left: 4px;
+    font-size: 12px;
+    color: #ffd700;
+}
+
+.weapon-name {
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Match Header & Level Info */
+#top-bar {
+    position: absolute;
+    top: 15px;
+    left: 25px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#level-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffd700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#frag-counter {
+    font-size: 24px;
+    color: #eee;
+    font-family: 'VT323', monospace;
+    background: rgba(0,0,0,0.6);
+    padding: 2px 10px;
+    border-left: 3px solid #00ff88;
+    width: fit-content;
+}
+
+/* Scoreboard Overlay (TAB) */
+#scoreboard {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 680px;
+    background: rgba(10, 10, 18, 0.95);
+    border: 3px solid #aa8833;
+    box-shadow: 0 0 30px rgba(0,0,0,0.95);
+    z-index: 50;
+    display: none;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.sb-header {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: #ffd700;
+    letter-spacing: 3px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 8px;
+}
+
+.sb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 22px;
+}
+
+.sb-table th {
+    text-align: left;
+    color: #888;
+    padding: 6px 12px;
+    border-bottom: 1px solid #444;
+}
+
+.sb-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #222;
+}
+
+.sb-row-player {
+    background: rgba(0, 255, 128, 0.15);
+    color: #00ffaa;
+    font-weight: bold;
+}
+
+/* Start / Game Over / Level Complete Modal */
+.modal-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 5, 10, 0.88);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.modal-content {
+    background: linear-gradient(180deg, #1f1f28 0%, #0d0d12 100%);
+    border: 3px solid #ff6600;
+    box-shadow: 0 0 40px rgba(255, 80, 0, 0.5), inset 0 0 20px rgba(0,0,0,0.8);
+    padding: 35px 50px;
+    border-radius: 8px;
+    max-width: 650px;
+}
+
+.modal-title {
+    font-size: 56px;
+    font-weight: 700;
+    color: #ff5500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(255, 85, 0, 0.8), 2px 2px 0 #000;
+    margin-bottom: 8px;
+}
+
+.modal-subtitle {
+    font-size: 22px;
+    color: #ccc;
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+}
+
+.level-selector-row {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    justify-content: center;
+}
+
+.level-btn {
+    background: #252533;
+    border: 2px solid #555;
+    color: #eee;
+    padding: 10px 18px;
+    font-size: 20px;
+    font-family: 'Teko', sans-serif;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.level-btn:hover, .level-btn.selected {
+    border-color: #ffd700;
+    background: #443311;
+    color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.start-btn {
+    background: linear-gradient(180deg, #ff6600 0%, #cc3300 100%);
+    border: 2px solid #ffaa00;
+    color: #fff;
+    font-size: 32px;
+    font-family: 'Teko', sans-serif;
+    letter-spacing: 3px;
+    padding: 8px 45px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(255, 100, 0, 0.6);
+    transition: all 0.15s;
+}
+
+.start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 120, 0, 0.9);
+}
+
+.instructions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 25px;
+    text-align: left;
+    margin-top: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    font-size: 18px;
+    color: #bbb;
+}
+
+.instructions-grid strong {
+    color: #ffd700;
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quake III Arena - HTML5 WebGL Edition</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Screen Overlays -->
+    <div id="damage-overlay"></div>
+    <div id="quad-overlay"></div>
+
+    <!-- Crosshair & Hitmarker -->
+    <div id="crosshair-container">
+        <div class="crosshair">
+            <div class="center-dot"></div>
+        </div>
+    </div>
+    <div id="hit-marker"></div>
+
+    <!-- Announcer Banner -->
+    <div id="announcer-banner"></div>
+
+    <!-- Top Left: Level & Frag Info -->
+    <div id="top-bar">
+        <div id="level-title">Level 1: The Courtyard</div>
+        <div id="frag-counter">FRAGS: 0 / 10</div>
+    </div>
+
+    <!-- Top Right: Killfeed -->
+    <div id="killfeed"></div>
+
+    <!-- Speedometer (Strafe-Jump Meter) -->
+    <div id="speedometer">SPEED: 320 UPS</div>
+
+    <!-- Weapon Selection Bar -->
+    <div id="weapon-bar">
+        <div class="weapon-slot" id="w-slot-1">
+            <span class="weapon-key">1</span>
+            <span class="weapon-name">GNT</span>
+        </div>
+        <div class="weapon-slot" id="w-slot-2">
+            <span class="weapon-key">2</span>
+            <span class="weapon-name">MG</span>
+        </div>
+        <div class="weapon-slot" id="w-slot-3">
+            <span class="weapon-key">3</span>
+            <span class="weapon-name">SG</span>
+        </div>
+        <div class="weapon-slot active" id="w-slot-4">
+            <span class="weapon-key">4</span>
+            <span class="weapon-name">RL</span>
+        </div>
+        <div class="weapon-slot" id="w-slot-5">
+            <span class="weapon-key">5</span>
+            <span class="weapon-name">RG</span>
+        </div>
+        <div class="weapon-slot" id="w-slot-6">
+            <span class="weapon-key">6</span>
+            <span class="weapon-name">PG</span>
+        </div>
+    </div>
+
+    <!-- Classic Quake 3 HUD (Bottom Bar) -->
+    <div id="hud-bottom">
+        <!-- Armor Stat -->
+        <div class="hud-stat-box">
+            <svg class="hud-icon" viewBox="0 0 24 24" fill="#ffbb00">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+            </svg>
+            <div class="hud-value" id="armor-val">50</div>
+        </div>
+
+        <!-- Sarge Animated Portrait Face -->
+        <div id="hud-face-container">
+            <canvas id="hud-face-canvas" width="74" height="74"></canvas>
+        </div>
+
+        <!-- Health Stat -->
+        <div class="hud-stat-box" style="justify-content: center;">
+            <svg class="hud-icon" viewBox="0 0 24 24" fill="#00ff88">
+                <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z"/>
+            </svg>
+            <div class="hud-value" id="health-val">125</div>
+        </div>
+
+        <!-- Ammo Stat -->
+        <div class="hud-stat-box" style="justify-content: flex-end;">
+            <svg class="hud-icon" viewBox="0 0 24 24" fill="#ff5533">
+                <path d="M14.5 2h-5c-.83 0-1.5.67-1.5 1.5v3h8v-3c0-.83-.67-1.5-1.5-1.5zm1.5 6.5h-8v12c0 .83.67 1.5 1.5 1.5h5c.83 0 1.5-.67 1.5-1.5v-12z"/>
+            </svg>
+            <div class="hud-value" id="ammo-val">20</div>
+        </div>
+    </div>
+
+    <!-- Scoreboard Overlay (TAB) -->
+    <div id="scoreboard">
+        <div class="sb-header">QUAKE III ARENA SCOREBOARD</div>
+        <table class="sb-table">
+            <thead>
+                <tr>
+                    <th>RANK</th>
+                    <th>NAME</th>
+                    <th>FRAGS</th>
+                    <th>DEATHS</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="sb-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- Start / Main Menu Modal -->
+    <div class="modal-screen" id="start-modal">
+        <div class="modal-content">
+            <h1 class="modal-title">QUAKE III ARENA</h1>
+            <p class="modal-subtitle">HTML5 / THREE.JS 3D RECREATION</p>
+
+            <div style="margin: 15px 0;">
+                <label style="color:#ffd700; font-size: 22px; display:block; margin-bottom: 8px;">WÄHLE DAS LEVEL:</label>
+                <div class="level-selector-row">
+                    <button class="level-btn selected" onclick="selectLevel(1, this)">1. THE COURTYARD</button>
+                    <button class="level-btn" onclick="selectLevel(2, this)">2. GOTHIC TEMPLE</button>
+                    <button class="level-btn" onclick="selectLevel(3, this)">3. THE LONGEST YARD (Q3DM17)</button>
+                </div>
+            </div>
+
+            <div class="instructions-grid">
+                <div><strong>WASD / Pfeile</strong> : Bewegen</div>
+                <div><strong>Maus</strong> : Umschauen</div>
+                <div><strong>Linksklick</strong> : Schießen</div>
+                <div><strong>Leertaste</strong> : Springen / Strafe-Jump</div>
+                <div><strong>1 - 6 / Mausrad</strong> : Waffen wechseln</div>
+                <div><strong>TAB-Taste</strong> : Scoreboard</div>
+                <div><strong>Jump-Pads</strong> : Katapultieren in die Luft</div>
+                <div><strong>Rocket Jump</strong> : Rakete auf Boden schießen</div>
+            </div>
+
+            <button class="start-btn" onclick="enterArena()">ENTER ARENA</button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-screen" id="game-over-modal" style="display: none;">
+        <div class="modal-content">
+            <h1 class="modal-title" style="color: #ff2200;">YOU WERE FRAGGED</h1>
+            <p class="modal-subtitle" id="go-desc">Du bist gefallen!</p>
+            <button class="start-btn" onclick="respawn()">RESPAWN</button>
+            <button class="level-btn" style="margin-top: 10px; width: 100%;" onclick="returnToMenu()">ZUM HAUPTMENÜ</button>
+        </div>
+    </div>
+
+    <!-- Level Complete Modal -->
+    <div class="modal-screen" id="level-complete-modal" style="display: none;">
+        <div class="modal-content">
+            <h1 class="modal-title" id="lc-title">LEVEL COMPLETE!</h1>
+            <p class="modal-subtitle" id="lc-desc">Ziel erreicht!</p>
+            <button class="start-btn" id="next-level-btn" onclick="advanceNextLevel()">NÄCHSTES LEVEL</button>
+            <button class="level-btn" style="margin-top: 10px; width: 100%;" onclick="returnToMenu()">ZUM HAUPTMENÜ</button>
+        </div>
+    </div>
+
+    <!-- Local / Offline Three.js library -->
+    <script src="lib/three.min.js"></script>
+
+    <!-- Quake Game Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/textures.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/bots.js"></script>
+    <script src="js/engine.js"></script>
+
+    <script>
+        let selectedLevelIdx = 1;
+        let game = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            game = new GameEngine();
+            window.gameEngine = game;
+            game.run();
+        });
+
+        function selectLevel(idx, btn) {
+            selectedLevelIdx = idx;
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function enterArena() {
+            if (game) {
+                game.startLevel(selectedLevelIdx);
+            }
+        }
+
+        function respawn() {
+            if (game) {
+                game.respawnPlayer();
+            }
+        }
+
+        function advanceNextLevel() {
+            selectedLevelIdx = (selectedLevelIdx >= 3) ? 1 : selectedLevelIdx + 1;
+            if (game) {
+                game.startLevel(selectedLevelIdx);
+            }
+        }
+
+        function returnToMenu() {
+            document.getElementById('game-over-modal').style.display = 'none';
+            document.getElementById('level-complete-modal').style.display = 'none';
+            document.getElementById('start-modal').style.display = 'flex';
+            if (game) {
+                game.matchActive = false;
+            }
+        }
+    </script>
+</body>
+</html>
