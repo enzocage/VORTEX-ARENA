@@ -48,6 +48,8 @@ class LevelManager {
                 return this.buildTheLongestYard();
             case 4:
                 return this.buildBrimstoneCore();
+            case 5:
+                return this.buildCryptOfTheDamned();
             default:
                 return this.buildCourtyard();
         }
@@ -549,6 +551,118 @@ class LevelManager {
         return {
             name: "Level 4: Brimstone Core",
             fragLimit: 25,
+            botCount: 4
+        };
+    }
+
+    // ==========================================
+    // LEVEL 5: CRYPT OF THE DAMNED (Underground Catacombs)
+    // ==========================================
+    buildCryptOfTheDamned() {
+        const stoneTex = window.quakeTextures.getGothicStone();
+        stoneTex.repeat.set(6, 6);
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(3, 3);
+
+        const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.85 });
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.45, metalness: 0.7 });
+
+        this.scene.background = new THREE.Color(0x050408);
+        this.scene.fog = new THREE.FogExp2(0x050408, 0.02);
+
+        // Low, eerie green-cyan ambient crypt lighting
+        const hemi = new THREE.HemisphereLight(0x44ddaa, 0x051109, 0.6);
+        this.levelGroup.add(hemi);
+
+        // Main Crypt Floor (70x70)
+        this.addBox(0, -1, 0, 70, 1, 70, stoneMat);
+
+        // Massive Outer Crypt Walls (Height 16)
+        this.addBox(0, 0, -35, 70, 16, 2, stoneMat);
+        this.addBox(0, 0, 35, 70, 16, 2, stoneMat);
+        this.addBox(-35, 0, 0, 2, 16, 70, stoneMat);
+        this.addBox(35, 0, 0, 2, 16, 70, stoneMat);
+
+        // Central Sarcophagus Dais (Y=2)
+        this.addBox(0, 0, 0, 14, 2, 14, stoneMat);
+        this.addPickup('quad', 0, 2.8, 0); // Quad Damage on Sarcophagus!
+
+        // Water Pools in East & West Wings (Swimming & Submerge areas!)
+        const waterGeom = new THREE.PlaneGeometry(16, 24);
+        const waterMat = new THREE.MeshStandardMaterial({ color: 0x00aacc, transparent: true, opacity: 0.6, roughness: 0.1 });
+        const waterMesh1 = new THREE.Mesh(waterGeom, waterMat);
+        waterMesh1.rotation.x = -Math.PI / 2;
+        waterMesh1.position.set(-22, 0.1, 0);
+        this.levelGroup.add(waterMesh1);
+
+        const waterMesh2 = waterMesh1.clone();
+        waterMesh2.position.set(22, 0.1, 0);
+        this.levelGroup.add(waterMesh2);
+
+        // Add water triggers to colliders
+        this.colliders.push({
+            min: new THREE.Vector3(-30, -3, -12),
+            max: new THREE.Vector3(-14, 0.5, 12),
+            isWater: true,
+            isTrigger: true
+        });
+        this.colliders.push({
+            min: new THREE.Vector3(14, -3, -12),
+            max: new THREE.Vector3(30, 0.5, 12),
+            isWater: true,
+            isTrigger: true
+        });
+
+        // 8 Vaulted Crypt Columns with Green Torches
+        const colPos = [
+            [-12, -18], [12, -18], [-12, 18], [12, 18],
+            [-24, -24], [24, -24], [-24, 24], [24, 24]
+        ];
+        colPos.forEach(([cx, cz]) => {
+            this.addBox(cx, 0, cz, 3, 16, 3, stoneMat);
+            const greenTorch = new THREE.PointLight(0x00ff88, 2.5, 15);
+            greenTorch.position.set(cx, 6, cz);
+            this.levelGroup.add(greenTorch);
+        });
+
+        // High Catacomb Gallery Ledge (North Wall, Y=8)
+        this.addBox(0, 8, -26, 40, 1, 10, metalMat);
+        this.addPickup('weapon', 0, 9.0, -26, 5); // Railgun perched in the crypt!
+
+        // Crypt Jump Pads
+        // Pad 1: Launches from West Water Pool to North Gallery
+        this.addJumpPad(-18, 0, -8, new THREE.Vector3(12, 18, -16));
+        // Pad 2: Launches from East Water Pool to North Gallery
+        this.addJumpPad(18, 0, -8, new THREE.Vector3(-12, 18, -16));
+
+        // Weapons & Pickups
+        this.addPickup('weapon', -22, 0.5, 0, 7); // BFG10K in West Crypt!
+        this.addPickup('weapon', 22, 0.5, 0, 4);  // Rocket Launcher in East Crypt!
+        this.addPickup('armor', 0, 8.8, -22, 100); // Heavy Red Armor
+        this.addPickup('health', -22, 0.5, 18, 50);
+        this.addPickup('health', 22, 0.5, 18, 50);
+
+        // Waypoints
+        this.waypoints = [
+            new THREE.Vector3(0, 2, 0),
+            new THREE.Vector3(0, 8.8, -26),
+            new THREE.Vector3(-22, 0.5, 0),
+            new THREE.Vector3(22, 0.5, 0),
+            new THREE.Vector3(-18, 0, -8),
+            new THREE.Vector3(18, 0, -8),
+            new THREE.Vector3(0, 0, 20)
+        ];
+
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(0, 0, 22), yaw: 0 },
+            { pos: new THREE.Vector3(-22, 0.5, 18), yaw: Math.PI / 4 },
+            { pos: new THREE.Vector3(22, 0.5, 18), yaw: -Math.PI / 4 },
+            { pos: new THREE.Vector3(0, 8.8, -24), yaw: Math.PI }
+        ];
+
+        return {
+            name: "Level 5: Crypt of the Damned",
+            fragLimit: 30,
             botCount: 4
         };
     }
