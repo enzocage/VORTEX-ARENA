@@ -12,7 +12,8 @@ class WeaponSystem {
             3: { id: 3, name: 'Shotgun', ammo: 25, maxAmmo: 50, fireRate: 1.0, damage: 10, pellets: 11, range: 150, isHitscan: true, spread: 0.075 },
             4: { id: 4, name: 'Rocket Launcher', ammo: 20, maxAmmo: 40, fireRate: 0.8, damage: 100, splashRadius: 5.5, projSpeed: 38, isHitscan: false },
             5: { id: 5, name: 'Railgun', ammo: 15, maxAmmo: 30, fireRate: 1.5, damage: 100, range: 300, isHitscan: true },
-            6: { id: 6, name: 'Plasma Gun', ammo: 80, maxAmmo: 150, fireRate: 0.12, damage: 20, splashRadius: 2.0, projSpeed: 50, isHitscan: false }
+            6: { id: 6, name: 'Plasma Gun', ammo: 80, maxAmmo: 150, fireRate: 0.12, damage: 20, splashRadius: 2.0, projSpeed: 50, isHitscan: false },
+            7: { id: 7, name: 'BFG10K', ammo: 10, maxAmmo: 25, fireRate: 1.2, damage: 150, splashRadius: 9.0, projSpeed: 28, isHitscan: false }
         };
 
         this.currentWeaponId = 4; // Start with Rocket Launcher by default for max fun!
@@ -118,6 +119,19 @@ class WeaponSystem {
         pg.add(pgCore);
         pg.add(pgNozzle);
         this.viewmodels[6] = pg;
+
+        // 7. BFG10K: Colossal cybernetic cannon with pulsing green energy reactor
+        const bfg = new THREE.Group();
+        const bfgBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 0.7), new THREE.MeshStandardMaterial({ color: 0x1f2b1f, metalness: 0.8, roughness: 0.3 }));
+        const bfgReactor = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 1.0 }));
+        bfgReactor.position.set(0, 0.1, -0.1);
+        const bfgBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 }));
+        bfgBarrel.rotation.x = Math.PI / 2;
+        bfgBarrel.position.set(0, 0.02, -0.45);
+        bfg.add(bfgBody);
+        bfg.add(bfgReactor);
+        bfg.add(bfgBarrel);
+        this.viewmodels[7] = bfg;
 
         // Attach all to viewmodel holder, hide inactive
         for (const [id, model] of Object.entries(this.viewmodels)) {
@@ -271,9 +285,10 @@ class WeaponSystem {
         }
     }
 
-    // Spawn Projectile (Rocket / Plasma)
+    // Spawn Projectile (Rocket / Plasma / BFG)
     spawnProjectile(weapon, origin, direction, shooter, damageMult) {
         const isRocket = (weapon.id === 4);
+        const isBFG = (weapon.id === 7);
         const group = new THREE.Group();
 
         if (isRocket) {
@@ -284,8 +299,16 @@ class WeaponSystem {
             mesh.rotation.x = Math.PI / 2;
             group.add(mesh);
 
-            // Glow point light
             const light = new THREE.PointLight(0xff6600, 1.5, 6);
+            group.add(light);
+        } else if (isBFG) {
+            // Giant green BFG orb
+            const geom = new THREE.SphereGeometry(0.45, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00ff44 });
+            const mesh = new THREE.Mesh(geom, mat);
+            group.add(mesh);
+
+            const light = new THREE.PointLight(0x00ff33, 4.0, 12);
             group.add(light);
         } else {
             // Plasma sphere
@@ -308,6 +331,7 @@ class WeaponSystem {
             shooter: shooter,
             damage: weapon.damage * damageMult,
             isRocket: isRocket,
+            isBFG: isBFG,
             aliveTime: 0
         });
     }
@@ -363,7 +387,33 @@ class WeaponSystem {
     }
 
     explodeProjectile(p, pos, targets, player) {
-        if (p.isRocket) {
+        if (p.isBFG) {
+            window.quakeAudio.playExplosion();
+            this.spawnBFGExplosionVisual(pos);
+
+            const radius = p.weapon.splashRadius;
+            for (const target of targets) {
+                if (!target.alive) continue;
+                const tCenter = target.position.clone().add(new THREE.Vector3(0, 0.8, 0));
+                const dist = pos.distanceTo(tCenter);
+                if (dist < radius) {
+                    const falloff = 1.0 - (dist / radius);
+                    const splashDmg = p.damage * falloff;
+                    target.takeDamage(splashDmg, 'BFG10K', p.shooter);
+
+                    const impulseDir = tCenter.clone().sub(pos).normalize();
+                    target.velocity.add(impulseDir.multiplyScalar(falloff * 24.0));
+
+                    if (p.shooter.isPlayer && target !== player) {
+                        window.quakeAudio.playHitDing();
+                        this.showHitMarker();
+                    }
+                }
+            }
+            if (p.shooter.isPlayer) {
+                window.quakeAudio.announce("Excellent!");
+            }
+        } else if (p.isRocket) {
             window.quakeAudio.playExplosion();
             this.spawnExplosionVisual(pos);
 
@@ -462,6 +512,28 @@ class WeaponSystem {
         const line = new THREE.Line(geom, mat);
         this.scene.add(line);
         this.beams.push({ obj1: line, obj2: null, age: 0, maxAge: 0.1 });
+    }
+
+    spawnBFGExplosionVisual(pos) {
+        const light = new THREE.PointLight(0x00ff44, 8, 20);
+        light.position.copy(pos);
+        this.scene.add(light);
+        setTimeout(() => this.scene.remove(light), 250);
+
+        for (let i = 0; i < 45; i++) {
+            const vel = new THREE.Vector3(
+                (Math.random() - 0.5) * 16,
+                (Math.random() - 0.2) * 14,
+                (Math.random() - 0.5) * 16
+            );
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(0.25, 0.25, 0.25),
+                new THREE.MeshBasicMaterial({ color: Math.random() > 0.3 ? 0x00ff44 : 0x88ff00 })
+            );
+            mesh.position.copy(pos);
+            this.scene.add(mesh);
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.6 + Math.random() * 0.4 });
+        }
     }
 
     spawnExplosionVisual(pos) {

@@ -208,6 +208,59 @@ class QuakeAudio {
         osc.stop(t + (isFatal ? 0.45 : 0.15));
     }
 
+    // 3D Positional Audio Player (Stereo spatial sound)
+    playPositional(soundFunc, sourcePos, listenerPos, maxDist = 45) {
+        if (!this.initialized || !this.ctx) return;
+        const dist = sourcePos.distanceTo(listenerPos);
+        if (dist > maxDist) return;
+
+        // Simple spatial volume & pan approximation
+        const panNode = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
+        const gainNode = this.ctx.createGain();
+
+        // Volume falloff
+        const vol = Math.max(0, 1.0 - (dist / maxDist));
+        gainNode.gain.value = vol;
+
+        // Stereo pan based on relative angle
+        if (panNode) {
+            const dx = sourcePos.x - listenerPos.x;
+            const pan = Math.max(-1, Math.min(1, dx / 20));
+            panNode.pan.value = pan;
+            gainNode.connect(panNode);
+            panNode.connect(this.sfxGain);
+        } else {
+            gainNode.connect(this.sfxGain);
+        }
+
+        soundFunc(gainNode);
+    }
+
+    // Legendary BFG10K: High power energy charge & catastrophic blast
+    playBFGFire() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, t);
+        osc.frequency.linearRampToValueAtTime(700, t + 0.35);
+
+        gain.gain.setValueAtTime(0.7, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, t);
+        filter.frequency.linearRampToValueAtTime(3000, t + 0.35);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(t);
+        osc.stop(t + 0.4);
+    }
+
     // Weapons Sounds
     playWeaponFire(weaponId) {
         if (!this.initialized) return;
@@ -231,6 +284,9 @@ class QuakeAudio {
                 break;
             case 6: // Plasma Gun
                 this.playPlasmaGun();
+                break;
+            case 7: // BFG10K
+                this.playBFGFire();
                 break;
         }
     }

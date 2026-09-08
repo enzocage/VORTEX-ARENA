@@ -45,6 +45,7 @@ class GameEngine {
         this.levelManager = new LevelManager(this.scene);
         this.weaponSystem = new WeaponSystem(this.scene, this.camera);
         this.botManager = new BotManager(this.scene);
+        this.editor = new LevelEditor(this.scene, this.camera, this.levelManager);
 
         // Match State
         this.currentLevelIndex = 1;
@@ -123,9 +124,9 @@ class GameEngine {
             if (!this.isPointerLocked) return;
             let current = this.weaponSystem.currentWeaponId;
             if (e.deltaY > 0) {
-                current = (current >= 6) ? 1 : current + 1;
+                current = (current >= 7) ? 1 : current + 1;
             } else {
-                current = (current <= 1) ? 6 : current - 1;
+                current = (current <= 1) ? 7 : current - 1;
             }
             this.weaponSystem.switchWeapon(current);
             this.updateWeaponBar();
@@ -139,8 +140,8 @@ class GameEngine {
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.input.right = true;
             if (e.code === 'Space') this.input.jump = true;
 
-            // Number keys 1-6 for weapons
-            if (e.key >= '1' && e.key <= '6') {
+            // Number keys 1-7 for weapons
+            if (e.key >= '1' && e.key <= '7') {
                 const id = parseInt(e.key);
                 this.weaponSystem.switchWeapon(id);
                 this.updateWeaponBar();
@@ -382,7 +383,7 @@ class GameEngine {
     }
 
     updateWeaponBar() {
-        for (let i = 1; i <= 6; i++) {
+        for (let i = 1; i <= 7; i++) {
             const slot = document.getElementById(`w-slot-${i}`);
             if (slot) {
                 if (i === this.weaponSystem.currentWeaponId) {
