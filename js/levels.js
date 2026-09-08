@@ -56,6 +56,8 @@ class LevelManager {
                 return this.buildTheIronCitadel();
             case 8:
                 return this.buildTheVoidSanctuary();
+            case 9:
+                return this.buildTheFinalAltar();
             default:
                 return this.buildCourtyard();
         }
@@ -945,6 +947,99 @@ class LevelManager {
         return {
             name: "Level 8: The Void Sanctuary",
             fragLimit: 45,
+            botCount: 6
+        };
+    }
+
+    // ==========================================
+    // LEVEL 9: THE FINAL ALTAR (Boss Arena vs Xaero)
+    // ==========================================
+    buildTheFinalAltar() {
+        const stoneTex = window.quakeTextures.getGothicStone();
+        stoneTex.repeat.set(6, 6);
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(4, 4);
+
+        const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.6, metalness: 0.3 });
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.2, metalness: 0.95 });
+
+        // Cosmic Blood Skybox / Dark Red Crimson Nebula
+        this.scene.background = new THREE.Color(0x180205);
+        this.scene.fog = new THREE.FogExp2(0x180205, 0.012);
+
+        const hemi = new THREE.HemisphereLight(0xff3344, 0x110005, 0.9);
+        this.levelGroup.add(hemi);
+
+        // Tier 1: Grand Crimson Altar Floor (60x60, Y=0)
+        this.addBox(0, -1, 0, 60, 1, 60, stoneMat);
+
+        // High Obsidian Monolith Walls
+        this.addBox(0, 0, -30, 60, 24, 2, metalMat);
+        this.addBox(0, 0, 30, 60, 24, 2, metalMat);
+        this.addBox(-30, 0, 0, 2, 24, 60, metalMat);
+        this.addBox(30, 0, 0, 2, 24, 60, metalMat);
+
+        // Central Elevated Throne of Champions (Y=5, 16x16)
+        this.addBox(0, 0, 0, 16, 5, 16, stoneMat);
+        this.addPickup('weapon', 0, 6.2, 0, 7); // Center BFG10K on Throne!
+
+        // 4 Grand Gothic Spire Columns at corners with golden flame beacons (Height: 28)
+        [[-22, -22], [22, -22], [-22, 22], [22, 22]].forEach(([px, pz]) => {
+            this.addBox(px, 0, pz, 4, 28, 4, stoneMat);
+            const beacon = new THREE.PointLight(0xff2200, 3.5, 20);
+            beacon.position.set(px, 12, pz);
+            this.levelGroup.add(beacon);
+        });
+
+        // 2 High Sniper Catwalks (North & South Wall, Height: 12)
+        this.addBox(0, 12, -24, 40, 1, 8, metalMat);
+        this.addBox(0, 12, 24, 40, 1, 8, metalMat);
+
+        // Pickups on Catwalks
+        this.addPickup('weapon', 0, 13.2, -24, 5); // Railgun North Catwalk
+        this.addPickup('weapon', 0, 13.2, 24, 4);  // Rocket Launcher South Catwalk
+        this.addPickup('quad', -15, 13.2, -24);    // Quad Damage on Catwalk Ledge!
+
+        // Jump Pads:
+        // 4 Jump Pads from Ground Floor straight up onto Central Throne
+        this.addJumpPad(0, 0, -18, new THREE.Vector3(0, 18.0, 12.0));
+        this.addJumpPad(0, 0, 18, new THREE.Vector3(0, 18.0, -12.0));
+        this.addJumpPad(-18, 0, 0, new THREE.Vector3(12.0, 18.0, 0));
+        this.addJumpPad(18, 0, 0, new THREE.Vector3(-12.0, 18.0, 0));
+
+        // 2 Catapult Pads from Throne to North/South Sniper Catwalks
+        this.addJumpPad(0, 5, -6, new THREE.Vector3(0, 18.0, -16.0));
+        this.addJumpPad(0, 5, 6, new THREE.Vector3(0, 18.0, 16.0));
+
+        // Pickups
+        this.addPickup('armor', 0, 0.8, -12, 100);
+        this.addPickup('health', 0, 0.8, 12, 100);
+        this.addPickup('armor', -20, 0.8, 0, 50);
+        this.addPickup('health', 20, 0.8, 0, 50);
+
+        // Waypoints
+        this.waypoints = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 6.2, 0),
+            new THREE.Vector3(0, 13.2, -24),
+            new THREE.Vector3(0, 13.2, 24),
+            new THREE.Vector3(-20, 0, 0),
+            new THREE.Vector3(20, 0, 0),
+            new THREE.Vector3(0, 0, -18),
+            new THREE.Vector3(0, 0, 18)
+        ];
+
+        // Spawn points
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(-18, 0, -18), yaw: Math.PI / 4 },
+            { pos: new THREE.Vector3(18, 0, -18), yaw: -Math.PI / 4 },
+            { pos: new THREE.Vector3(-18, 0, 18), yaw: 3 * Math.PI / 4 },
+            { pos: new THREE.Vector3(18, 0, 18), yaw: -3 * Math.PI / 4 }
+        ];
+
+        return {
+            name: "Level 9: The Final Altar (Xaero's Domain)",
+            fragLimit: 50,
             botCount: 6
         };
     }

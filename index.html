@@ -136,6 +136,7 @@
                     <button class="level-btn" onclick="selectLevel(6, this)">6. SPACE CHAMBER</button>
                     <button class="level-btn" onclick="selectLevel(7, this)">7. THE IRON CITADEL</button>
                     <button class="level-btn" onclick="selectLevel(8, this)">8. THE VOID SANCTUARY</button>
+                    <button class="level-btn" onclick="selectLevel(9, this)">9. THE FINAL ALTAR</button>
                 </div>
             </div>
 
@@ -227,7 +228,7 @@
         }
 
         function advanceNextLevel() {
-            selectedLevelIdx = (selectedLevelIdx >= 8) ? 1 : selectedLevelIdx + 1;
+            selectedLevelIdx = (selectedLevelIdx >= 9) ? 1 : selectedLevelIdx + 1;
             if (game) {
                 game.startLevel(selectedLevelIdx);
             }
