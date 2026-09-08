@@ -54,6 +54,8 @@ class LevelManager {
                 return this.buildSpaceChamber();
             case 7:
                 return this.buildTheIronCitadel();
+            case 8:
+                return this.buildTheVoidSanctuary();
             default:
                 return this.buildCourtyard();
         }
@@ -842,6 +844,108 @@ class LevelManager {
             name: "Level 7: The Iron Citadel",
             fragLimit: 40,
             botCount: 5
+        };
+    }
+
+    // ==========================================
+    // LEVEL 8: THE VOID SANCTUARY (Cosmic Ring Duel)
+    // ==========================================
+    buildTheVoidSanctuary() {
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(4, 4);
+        const stoneTex = window.quakeTextures.getGothicStone();
+        stoneTex.repeat.set(3, 3);
+
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.2, metalness: 0.95 });
+        const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.7 });
+
+        const spaceTex = window.quakeTextures.getSpaceSkybox();
+        this.scene.background = spaceTex;
+        this.scene.fog = null;
+
+        const hemi = new THREE.HemisphereLight(0xff00ff, 0x00ffff, 0.9);
+        this.levelGroup.add(hemi);
+
+        // Center Floating Ring Arena (Octagon Outer Ring)
+        this.addBox(0, 0, -18, 24, 1.2, 8, metalMat);
+        this.addBox(0, 0, 18, 24, 1.2, 8, metalMat);
+        this.addBox(-18, 0, 0, 8, 1.2, 24, metalMat);
+        this.addBox(18, 0, 0, 8, 1.2, 24, metalMat);
+
+        // 4 Diagonal Corner Connectors
+        this.addBox(-14, 0, -14, 8, 1.2, 8, stoneMat);
+        this.addBox(14, 0, -14, 8, 1.2, 8, stoneMat);
+        this.addBox(-14, 0, 14, 8, 1.2, 8, stoneMat);
+        this.addBox(14, 0, 14, 8, 1.2, 8, stoneMat);
+
+        // Center Void Hole: An endless abyss with floating Quad Damage hovering directly over the void!
+        this.addBox(0, 4, 0, 6, 0.6, 6, metalMat);
+        this.addPickup('quad', 0, 5.0, 0); // Quad Damage in center hole!
+
+        // Outer Floating Sniper Satellite Rocks (Height: 12)
+        this.addBox(0, 12, -45, 12, 1.2, 12, metalMat); // North Railgun Rock
+        this.addBox(0, 12, 45, 12, 1.2, 12, metalMat);  // South BFG Rock
+        this.addBox(-45, 12, 0, 12, 1.2, 12, metalMat); // West Rocket Rock
+        this.addBox(45, 12, 0, 12, 1.2, 12, metalMat);  // East Plasma Rock
+
+        // Cross Jump Pads to Outer Satellite Rocks
+        this.addJumpPad(0, 1.2, -18, new THREE.Vector3(0, 22.0, -32.0));
+        this.addJumpPad(0, 1.2, 18, new THREE.Vector3(0, 22.0, 32.0));
+        this.addJumpPad(-18, 1.2, 0, new THREE.Vector3(-32.0, 22.0, 0));
+        this.addJumpPad(18, 1.2, 0, new THREE.Vector3(32.0, 22.0, 0));
+
+        // Return Jump Pads from Satellite Rocks to Center Ring
+        this.addJumpPad(0, 13.2, -40, new THREE.Vector3(0, 12.0, 28.0));
+        this.addJumpPad(0, 13.2, 40, new THREE.Vector3(0, 12.0, -28.0));
+        this.addJumpPad(-40, 13.2, 0, new THREE.Vector3(28.0, 12.0, 0));
+        this.addJumpPad(40, 13.2, 0, new THREE.Vector3(-28.0, 12.0, 0));
+
+        // Center Jump Pad over the void hole to launch player onto the hovering Quad!
+        this.addJumpPad(-6, 1.2, 0, new THREE.Vector3(6, 14.0, 0));
+        this.addJumpPad(6, 1.2, 0, new THREE.Vector3(-6, 14.0, 0));
+
+        // Weapons
+        this.addPickup('weapon', 0, 13.2, -45, 5); // Railgun North
+        this.addPickup('weapon', 0, 13.2, 45, 7);  // BFG10K South
+        this.addPickup('weapon', -45, 13.2, 0, 4); // Rocket Launcher West
+        this.addPickup('weapon', 45, 13.2, 0, 6);  // Plasma Gun East
+
+        this.addPickup('armor', -14, 1.2, -14, 100);
+        this.addPickup('health', 14, 1.2, 14, 100);
+        this.addPickup('health', -14, 1.2, 14, 50);
+        this.addPickup('health', 14, 1.2, -14, 50);
+
+        // Atmospheric Pulsing Cosmic Lights
+        const voidLight1 = new THREE.PointLight(0xff00bb, 4, 30);
+        voidLight1.position.set(0, 6, 0);
+        this.levelGroup.add(voidLight1);
+
+        const voidLight2 = new THREE.PointLight(0x00ffff, 3, 25);
+        voidLight2.position.set(0, 18, -45);
+        this.levelGroup.add(voidLight2);
+
+        // Waypoints
+        this.waypoints = [
+            new THREE.Vector3(0, 1.2, -18),
+            new THREE.Vector3(0, 1.2, 18),
+            new THREE.Vector3(-18, 1.2, 0),
+            new THREE.Vector3(18, 1.2, 0),
+            new THREE.Vector3(0, 5.0, 0),
+            new THREE.Vector3(0, 13.2, -45),
+            new THREE.Vector3(0, 13.2, 45)
+        ];
+
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(-14, 1.2, -14), yaw: Math.PI / 4 },
+            { pos: new THREE.Vector3(14, 1.2, -14), yaw: -Math.PI / 4 },
+            { pos: new THREE.Vector3(-14, 1.2, 14), yaw: 3 * Math.PI / 4 },
+            { pos: new THREE.Vector3(14, 1.2, 14), yaw: -3 * Math.PI / 4 }
+        ];
+
+        return {
+            name: "Level 8: The Void Sanctuary",
+            fragLimit: 45,
+            botCount: 6
         };
     }
 
