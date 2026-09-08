@@ -46,6 +46,7 @@ class GameEngine {
         this.weaponSystem = new WeaponSystem(this.scene, this.camera);
         this.botManager = new BotManager(this.scene);
         this.editor = new LevelEditor(this.scene, this.camera, this.levelManager);
+        this.settingsManager = new SettingsManager(this);
 
         // Match State
         this.currentLevelIndex = 1;
@@ -151,6 +152,13 @@ class GameEngine {
             if (e.code === 'Tab') {
                 e.preventDefault();
                 this.showScoreboard(true);
+            }
+
+            // Options / Settings (O)
+            if (e.code === 'KeyO') {
+                if (this.settingsManager) {
+                    this.settingsManager.toggleSettings();
+                }
             }
         });
 

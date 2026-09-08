@@ -145,7 +145,10 @@
                 <div><strong>Rocket Jump</strong> : Rakete auf Boden schießen</div>
             </div>
 
-            <button class="start-btn" onclick="enterArena()">ENTER ARENA</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="start-btn" style="flex: 2;" onclick="enterArena()">ENTER ARENA</button>
+                <button class="level-btn" style="flex: 1; font-size: 24px;" onclick="openSettings()">OPTIONEN (O)</button>
+            </div>
         </div>
     </div>
 
@@ -180,6 +183,7 @@
     <script src="js/levels.js"></script>
     <script src="js/bots.js"></script>
     <script src="js/editor.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/engine.js"></script>
 
     <script>
@@ -191,6 +195,12 @@
             window.gameEngine = game;
             game.run();
         });
+
+        function openSettings() {
+            if (game && game.settingsManager) {
+                game.settingsManager.toggleSettings();
+            }
+        }
 
         function selectLevel(idx, btn) {
             selectedLevelIdx = idx;
