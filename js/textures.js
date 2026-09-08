@@ -111,15 +111,15 @@ class QuakeTextures {
             ctx.fill();
         });
 
-        // Surface scratches & texture
-        for (let i = 0; i < 40; i++) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        // Surface scratches, highlights & rivets
+        for (let i = 0; i < 60; i++) {
+            ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.4)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             const sx = Math.random() * 512;
             const sy = Math.random() * 512;
             ctx.moveTo(sx, sy);
-            ctx.lineTo(sx + (Math.random() - 0.5) * 60, sy + (Math.random() - 0.5) * 60);
+            ctx.lineTo(sx + (Math.random() - 0.5) * 80, sy + (Math.random() - 0.5) * 80);
             ctx.stroke();
         }
 
