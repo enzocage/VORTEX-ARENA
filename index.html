@@ -134,6 +134,7 @@
                     <button class="level-btn" onclick="selectLevel(4, this)">4. BRIMSTONE CORE</button>
                     <button class="level-btn" onclick="selectLevel(5, this)">5. CRYPT OF THE DAMNED</button>
                     <button class="level-btn" onclick="selectLevel(6, this)">6. SPACE CHAMBER</button>
+                    <button class="level-btn" onclick="selectLevel(7, this)">7. THE IRON CITADEL</button>
                 </div>
             </div>
 
@@ -225,7 +226,7 @@
         }
 
         function advanceNextLevel() {
-            selectedLevelIdx = (selectedLevelIdx >= 6) ? 1 : selectedLevelIdx + 1;
+            selectedLevelIdx = (selectedLevelIdx >= 7) ? 1 : selectedLevelIdx + 1;
             if (game) {
                 game.startLevel(selectedLevelIdx);
             }

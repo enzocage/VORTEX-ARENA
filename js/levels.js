@@ -52,6 +52,8 @@ class LevelManager {
                 return this.buildCryptOfTheDamned();
             case 6:
                 return this.buildSpaceChamber();
+            case 7:
+                return this.buildTheIronCitadel();
             default:
                 return this.buildCourtyard();
         }
@@ -746,6 +748,99 @@ class LevelManager {
         return {
             name: "Level 6: Space Chamber",
             fragLimit: 35,
+            botCount: 5
+        };
+    }
+
+    // ==========================================
+    // LEVEL 7: THE IRON CITADEL (Multi-Tier Fortress)
+    // ==========================================
+    buildTheIronCitadel() {
+        const metalTex = window.quakeTextures.getMetalPanel();
+        metalTex.repeat.set(5, 5);
+        const stoneTex = window.quakeTextures.getGothicStone();
+        stoneTex.repeat.set(4, 4);
+
+        const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.35, metalness: 0.8 });
+        const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.75 });
+
+        this.scene.background = new THREE.Color(0x15121c);
+        this.scene.fog = new THREE.FogExp2(0x15121c, 0.012);
+
+        const hemi = new THREE.HemisphereLight(0xffcc88, 0x110822, 0.7);
+        this.levelGroup.add(hemi);
+
+        // Tier 1: Ground Courtyard (Y=0, 80x80)
+        this.addBox(0, -1, 0, 80, 1, 80, stoneMat);
+
+        // Fortified Perimeter Citadel Walls (Height: 22)
+        this.addBox(0, 0, -40, 80, 22, 2, stoneMat);
+        this.addBox(0, 0, 40, 80, 22, 2, stoneMat);
+        this.addBox(-40, 0, 0, 2, 22, 80, stoneMat);
+        this.addBox(40, 0, 0, 2, 22, 80, stoneMat);
+
+        // Tier 2: Mid-Level Ring Ramparts (Y=7, Outer Walkways)
+        this.addBox(0, 7, -30, 60, 1, 10, metalMat);
+        this.addBox(0, 7, 30, 60, 1, 10, metalMat);
+        this.addBox(-30, 7, 0, 10, 1, 50, metalMat);
+        this.addBox(30, 7, 0, 10, 1, 50, metalMat);
+
+        // Tier 3: High Iron Keep (Y=14, Center Platform 24x24)
+        this.addBox(0, 14, 0, 24, 1.2, 24, metalMat);
+        this.addPickup('weapon', 0, 15.2, 0, 7); // Central BFG10K Shrine!
+
+        // 4 Grand Watchtowers at the corners (Height: 25)
+        [[-32, -32], [32, -32], [-32, 32], [32, 32]].forEach(([tx, tz]) => {
+            this.addBox(tx, 0, tz, 8, 25, 8, metalMat);
+            const beacon = new THREE.PointLight(0xffaa00, 3, 20);
+            beacon.position.set(tx, 16, tz);
+            this.levelGroup.add(beacon);
+        });
+
+        // Vertical Lift Jump Pads: Launch from Ground Tier directly up to Mid-Level Ramparts
+        this.addJumpPad(-25, 0, -20, new THREE.Vector3(0, 18.0, 0));
+        this.addJumpPad(25, 0, -20, new THREE.Vector3(0, 18.0, 0));
+        this.addJumpPad(-25, 0, 20, new THREE.Vector3(0, 18.0, 0));
+        this.addJumpPad(25, 0, 20, new THREE.Vector3(0, 18.0, 0));
+
+        // High Trajectory Catapults from Mid Ramparts to High Iron Keep
+        this.addJumpPad(0, 7, -25, new THREE.Vector3(0, 19.0, 18.0));
+        this.addJumpPad(0, 7, 25, new THREE.Vector3(0, 19.0, -18.0));
+
+        // Teleporters from Ground to Watchtower Perches
+        this.addTeleporter(-15, 0, 0, new THREE.Vector3(-32, 17, -32), Math.PI / 4);
+        this.addTeleporter(15, 0, 0, new THREE.Vector3(32, 17, 32), -3 * Math.PI / 4);
+
+        // Pickups
+        this.addPickup('quad', 0, 0.8, 0);          // Quad Damage Ground Center
+        this.addPickup('armor', 0, 7.8, -30, 100);   // Heavy Armor Mid North
+        this.addPickup('armor', 0, 7.8, 30, 100);    // Heavy Armor Mid South
+        this.addPickup('health', -30, 7.8, 0, 100);  // MegaHealth Mid West
+        this.addPickup('weapon', 30, 7.8, 0, 5);     // Railgun Mid East
+        this.addPickup('weapon', -32, 17.5, -32, 4); // Rocket Launcher on Watchtower
+
+        // Waypoints
+        this.waypoints = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 7.8, -30),
+            new THREE.Vector3(0, 7.8, 30),
+            new THREE.Vector3(-30, 7.8, 0),
+            new THREE.Vector3(30, 7.8, 0),
+            new THREE.Vector3(0, 15.2, 0),
+            new THREE.Vector3(-32, 17.5, -32),
+            new THREE.Vector3(32, 17.5, 32)
+        ];
+
+        this.spawnPoints = [
+            { pos: new THREE.Vector3(0, 0, 15), yaw: Math.PI },
+            { pos: new THREE.Vector3(0, 0, -15), yaw: 0 },
+            { pos: new THREE.Vector3(-25, 7.8, 0), yaw: Math.PI / 2 },
+            { pos: new THREE.Vector3(25, 7.8, 0), yaw: -Math.PI / 2 }
+        ];
+
+        return {
+            name: "Level 7: The Iron Citadel",
+            fragLimit: 40,
             botCount: 5
         };
     }
