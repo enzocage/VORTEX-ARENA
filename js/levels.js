@@ -289,6 +289,13 @@ class LevelManager {
         // Main Lower Floor
         this.addBox(0, -1, 0, 60, 1, 60, stoneMat);
 
+        // Deadly Animated Lava Pit in Cathedral Center Trench
+        const lavaMat = window.quakeTextures.getLavaMaterial();
+        this.addBox(0, -0.4, 0, 18, 0.4, 18, lavaMat);
+        const lavaLight = new THREE.PointLight(0xff3300, 3, 14);
+        lavaLight.position.set(0, 1.5, 0);
+        this.levelGroup.add(lavaLight);
+
         // Surrounding high fortress walls
         this.addBox(0, 0, -30, 60, 14, 2, stoneMat);
         this.addBox(0, 0, 30, 60, 14, 2, stoneMat);
