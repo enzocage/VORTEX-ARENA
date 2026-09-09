@@ -124,6 +124,11 @@
         </table>
     </div>
 
+    <!-- 1-Second Fullscreen Splash Screen on Enter Arena -->
+    <div id="splash-screen" style="display: none;">
+        <img id="splash-img" src="assets/splash.jpg" alt="Vortex Arena">
+    </div>
+
     <!-- Start / Main Menu Modal -->
     <div class="modal-screen" id="start-modal">
         <div class="modal-content start-modal-content">
@@ -253,10 +258,37 @@
             });
         });
 
+        let isEntering = false;
         function enterArena() {
-            if (game) {
-                game.startLevel(selectedLevelIdx, currentDifficulty);
+            if (isEntering) return;
+            isEntering = true;
+
+            // Immediately start audio/music context on user interaction
+            if (window.quakeAudio) {
+                window.quakeAudio.init();
+                window.quakeAudio.resume();
+                window.quakeAudio.startMusic();
             }
+
+            // Hide start menu
+            const startModal = document.getElementById('start-modal');
+            if (startModal) startModal.style.display = 'none';
+
+            // Show fullscreen splash screen for 1 second
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.display = 'flex';
+            }
+
+            setTimeout(() => {
+                if (splash) {
+                    splash.style.display = 'none';
+                }
+                isEntering = false;
+                if (game) {
+                    game.startLevel(selectedLevelIdx, currentDifficulty);
+                }
+            }, 1000);
         }
 
         function respawn() {
