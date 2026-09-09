@@ -118,8 +118,33 @@ class QuakeAudio {
             });
 
             this.bgMusic = audio;
+            if (this._initialMusicVol !== undefined) {
+                this.setMusicVolume(this._initialMusicVol);
+            }
         } catch (e) {
             console.warn("Failed to load/play background music:", e);
+        }
+    }
+
+    setMasterVolume(val) {
+        if (this.masterGain && this.ctx) {
+            this.masterGain.gain.setValueAtTime(val, this.ctx.currentTime);
+        }
+    }
+
+    setSfxVolume(val) {
+        if (this.sfxGain && this.ctx) {
+            this.sfxGain.gain.setValueAtTime(val, this.ctx.currentTime);
+        }
+    }
+
+    setMusicVolume(val) {
+        this._initialMusicVol = val;
+        if (this.bgMusic) {
+            this.bgMusic.volume = Math.max(0, Math.min(1, val));
+        }
+        if (this.musicGain && this.ctx) {
+            this.musicGain.gain.setValueAtTime(val, this.ctx.currentTime);
         }
     }
 

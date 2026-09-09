@@ -7,6 +7,8 @@ class SettingsManager {
             fov: 90,
             sensitivity: 0.0022,
             masterVolume: 0.8,
+            sfxVolume: 0.85,
+            musicVolume: 0.75,
             crosshairType: 'cross', // cross, dot, circle
             crosshairColor: '#00ff80',
             bloodEnabled: true,
@@ -67,8 +69,19 @@ class SettingsManager {
             fpsCounter.style.display = this.settings.showFps ? 'block' : 'none';
         }
 
-        if (window.quakeAudio && window.quakeAudio.masterGain) {
-            window.quakeAudio.masterGain.gain.value = this.settings.masterVolume;
+        if (window.quakeAudio) {
+            if (window.quakeAudio.setMasterVolume) {
+                window.quakeAudio.setMasterVolume(this.settings.masterVolume);
+            } else if (window.quakeAudio.masterGain) {
+                window.quakeAudio.masterGain.gain.value = this.settings.masterVolume;
+            }
+
+            if (window.quakeAudio.setSfxVolume) {
+                window.quakeAudio.setSfxVolume(this.settings.sfxVolume !== undefined ? this.settings.sfxVolume : 0.85);
+            }
+            if (window.quakeAudio.setMusicVolume) {
+                window.quakeAudio.setMusicVolume(this.settings.musicVolume !== undefined ? this.settings.musicVolume : 0.75);
+            }
         }
 
         // Crosshair update
@@ -118,10 +131,24 @@ class SettingsManager {
                     </div>
                     <div>
                         <label style="font-size: 22px; color: #ffd700; display: flex; justify-content: space-between;">
-                            <span>LAUTSTÄRKE:</span>
+                            <span>GESAMT-LAUTSTÄRKE (MASTER):</span>
                             <span id="vol-display">${Math.round(this.settings.masterVolume * 100)}%</span>
                         </label>
                         <input type="range" id="vol-slider" min="0" max="100" value="${this.settings.masterVolume * 100}" style="width: 100%; cursor: pointer;">
+                    </div>
+                    <div>
+                        <label style="font-size: 22px; color: #ff9900; display: flex; justify-content: space-between;">
+                            <span>SOUND-EFFEKTE (SFX & EXPLOSIONEN):</span>
+                            <span id="sfx-vol-display">${Math.round((this.settings.sfxVolume !== undefined ? this.settings.sfxVolume : 0.85) * 100)}%</span>
+                        </label>
+                        <input type="range" id="sfx-vol-slider" min="0" max="100" value="${(this.settings.sfxVolume !== undefined ? this.settings.sfxVolume : 0.85) * 100}" style="width: 100%; cursor: pointer;">
+                    </div>
+                    <div>
+                        <label style="font-size: 22px; color: #00ffaa; display: flex; justify-content: space-between;">
+                            <span>MUSIK (SOUNDTRACK VENJENT):</span>
+                            <span id="music-vol-display">${Math.round((this.settings.musicVolume !== undefined ? this.settings.musicVolume : 0.75) * 100)}%</span>
+                        </label>
+                        <input type="range" id="music-vol-slider" min="0" max="100" value="${(this.settings.musicVolume !== undefined ? this.settings.musicVolume : 0.75) * 100}" style="width: 100%; cursor: pointer;">
                     </div>
                     <div>
                         <label style="font-size: 22px; color: #ffd700; display: block; margin-bottom: 5px;">FADENKREUZ-STIL:</label>
@@ -165,6 +192,18 @@ class SettingsManager {
         document.getElementById('vol-slider').addEventListener('input', (e) => {
             this.settings.masterVolume = parseInt(e.target.value) / 100;
             document.getElementById('vol-display').textContent = `${Math.round(this.settings.masterVolume * 100)}%`;
+            this.applySettings();
+        });
+
+        document.getElementById('sfx-vol-slider').addEventListener('input', (e) => {
+            this.settings.sfxVolume = parseInt(e.target.value) / 100;
+            document.getElementById('sfx-vol-display').textContent = `${Math.round(this.settings.sfxVolume * 100)}%`;
+            this.applySettings();
+        });
+
+        document.getElementById('music-vol-slider').addEventListener('input', (e) => {
+            this.settings.musicVolume = parseInt(e.target.value) / 100;
+            document.getElementById('music-vol-display').textContent = `${Math.round(this.settings.musicVolume * 100)}%`;
             this.applySettings();
         });
 
