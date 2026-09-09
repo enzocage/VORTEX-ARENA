@@ -119,30 +119,37 @@ canvas {
     border-radius: 50%;
 }
 
-/* Hit marker */
+/* Hit marker - Dramatic high-contrast red-gold hit confirmation */
 #hit-marker {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     transform: translate(-50%, -50%) rotate(45deg);
     pointer-events: none;
-    z-index: 11;
+    z-index: 15;
     opacity: 0;
-    transition: opacity 0.06s ease;
+    transition: opacity 0.05s ease, transform 0.05s ease;
+}
+
+#hit-marker.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(45deg) scale(1.35);
 }
 
 #hit-marker::before, #hit-marker::after {
     content: '';
     position: absolute;
-    background: #ff2200;
+    background: #ff1100;
+    box-shadow: 0 0 8px #ff4400, 0 0 14px #ffff00;
+    border-radius: 2px;
 }
 #hit-marker::before {
-    top: 14px; left: 4px; width: 24px; height: 4px;
+    top: 15px; left: 2px; width: 32px; height: 6px;
 }
 #hit-marker::after {
-    top: 4px; left: 14px; width: 4px; height: 24px;
+    top: 2px; left: 15px; width: 6px; height: 32px;
 }
 
 /* Announcer Banner & Medals */

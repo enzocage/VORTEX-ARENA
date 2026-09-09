@@ -20,26 +20,36 @@ class WeaponSystem {
         this.lastFireTime = 0;
         this.consecutiveRailHits = 0;
 
-        // Projectiles and visual effects
+        // Projectiles, visual effects, and animated shockwaves
         this.projectiles = [];
         this.particles = [];
         this.beams = [];
+        this.shockwaves = [];
         this.decals = []; // Bullet hole & blast mark decals
-        this.maxDecals = 30; // Optimized for high frame rates
-        this.maxParticles = 60; // Hard cap on active particles to guarantee 120 FPS
+        this.maxDecals = 35; // Optimized for high frame rates
+        this.maxParticles = 140; // Enhanced particle density while easily maintaining 120 FPS
 
         // Shared reusable geometries and materials for particles to eliminate GC allocation spikes
+        this._boxGeomMedium = new THREE.BoxGeometry(0.2, 0.2, 0.2);
         this._boxGeomSmall = new THREE.BoxGeometry(0.12, 0.12, 0.12);
-        this._boxGeomTiny = new THREE.BoxGeometry(0.06, 0.06, 0.06);
-        this._bloodMat = new THREE.MeshBasicMaterial({ color: 0xaa1111 });
-        this._sparkMat = new THREE.MeshBasicMaterial({ color: 0xffea00 });
+        this._boxGeomTiny = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+        this._ringGeom = new THREE.RingGeometry(0.2, 0.45, 24);
+        
+        this._bloodMat = new THREE.MeshBasicMaterial({ color: 0xdd1111 });
+        this._bloodGlowMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+        this._sparkMat = new THREE.MeshBasicMaterial({ color: 0xffff44 });
+        this._sparkWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         this._plasmaMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-        this._fireMat1 = new THREE.MeshBasicMaterial({ color: 0xff4400 });
-        this._fireMat2 = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-        this._smokeMat = new THREE.MeshBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.6 });
+        this._plasmaCoreMat = new THREE.MeshBasicMaterial({ color: 0xddffff });
+        this._fireMat1 = new THREE.MeshBasicMaterial({ color: 0xff2200 });
+        this._fireMat2 = new THREE.MeshBasicMaterial({ color: 0xff8800 });
+        this._fireMat3 = new THREE.MeshBasicMaterial({ color: 0xffdd00 });
+        this._smokeMat = new THREE.MeshBasicMaterial({ color: 0x999999, transparent: true, opacity: 0.7 });
         this._bfgMat1 = new THREE.MeshBasicMaterial({ color: 0x00ff44 });
         this._bfgMat2 = new THREE.MeshBasicMaterial({ color: 0x88ff00 });
-        this._decalGeom = new THREE.PlaneGeometry(0.28, 0.28);
+        this._bfgCoreMat = new THREE.MeshBasicMaterial({ color: 0xd0ff88 });
+
+        this._decalGeom = new THREE.PlaneGeometry(0.35, 0.35);
         this._decalMat = new THREE.MeshBasicMaterial({ color: 0x111111, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
 
         // Viewmodel container attached to camera
@@ -217,28 +227,57 @@ class WeaponSystem {
             }
         }
 
-        // Trigger viewmodel recoil
-        this.recoilZ = 0.08;
-        this.recoilRot = 0.06;
+        // Trigger punchy viewmodel recoil & weapon kick
+        if (weapon.id === 7) { // BFG
+            this.recoilZ = 0.22;
+            this.recoilRot = 0.18;
+        } else if (weapon.id === 4) { // Rocket Launcher
+            this.recoilZ = 0.16;
+            this.recoilRot = 0.14;
+        } else if (weapon.id === 5) { // Railgun
+            this.recoilZ = 0.18;
+            this.recoilRot = 0.12;
+        } else if (weapon.id === 3) { // Shotgun
+            this.recoilZ = 0.14;
+            this.recoilRot = 0.11;
+        } else {
+            this.recoilZ = 0.08;
+            this.recoilRot = 0.06;
+        }
 
-        // Dynamic Muzzle Flash Light color based on weapon
+        // Add subtle tactile screen impulse on heavy weapons
+        if (shooter.isPlayer && window.gameEngine) {
+            if (weapon.id === 7) {
+                window.gameEngine.cameraShakeIntensity = Math.max(window.gameEngine.cameraShakeIntensity, 0.5);
+                window.gameEngine.cameraShakeDuration = Math.max(window.gameEngine.cameraShakeDuration, 0.35);
+            } else if (weapon.id === 4 || weapon.id === 5 || weapon.id === 3) {
+                window.gameEngine.cameraShakeIntensity = Math.max(window.gameEngine.cameraShakeIntensity, 0.28);
+                window.gameEngine.cameraShakeDuration = Math.max(window.gameEngine.cameraShakeDuration, 0.18);
+            }
+        }
+
+        // Dynamic Muzzle Flash Light color and blinding intensity based on weapon
         let flashColor = 0xffaa22;
-        if (weapon.id === 5) flashColor = 0x00ffff; // Railgun cyan
-        else if (weapon.id === 6) flashColor = 0xaa00ff; // Plasma purple
-        else if (weapon.id === 7) flashColor = 0x00ff44; // BFG green
+        let flashIntensity = 6.0;
+        let flashDist = 18;
+        if (weapon.id === 5) { flashColor = 0x00ffff; flashIntensity = 8.0; flashDist = 24; } // Railgun cyan
+        else if (weapon.id === 6) { flashColor = 0xbf00ff; flashIntensity = 5.0; flashDist = 14; } // Plasma purple
+        else if (weapon.id === 7) { flashColor = 0x00ff44; flashIntensity = 12.0; flashDist = 32; } // BFG green
+        else if (weapon.id === 3) { flashColor = 0xff8811; flashIntensity = 7.0; flashDist = 18; } // Shotgun blast
+        else if (weapon.id === 4) { flashColor = 0xff5500; flashIntensity = 7.5; flashDist = 20; } // Rocket ignition
 
         this.muzzleLight.color.setHex(flashColor);
-        this.muzzleLight.intensity = (weapon.id === 7) ? 6.0 : 3.0;
+        this.muzzleLight.intensity = flashIntensity;
         
         // Also cast dynamic flash light in the world at shooter position
-        const worldFlash = new THREE.PointLight(flashColor, 3.5, 12);
+        const worldFlash = new THREE.PointLight(flashColor, flashIntensity, flashDist);
         const flashOrigin = shooter.isPlayer ? this.camera.position.clone() : shooter.position.clone().add(new THREE.Vector3(0, 1.4, 0));
         worldFlash.position.copy(flashOrigin);
         this.scene.add(worldFlash);
         setTimeout(() => {
             this.muzzleLight.intensity = 0;
             this.scene.remove(worldFlash);
-        }, 65);
+        }, 75);
 
         // Sound effect
         window.quakeAudio.playWeaponFire(weapon.id);
@@ -363,32 +402,50 @@ class WeaponSystem {
         const group = new THREE.Group();
 
         if (isRocket) {
-            // Rocket body & fins
-            const geom = new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8);
+            // High-visibility rocket with glowing exhaust fire
+            const geom = new THREE.CylinderGeometry(0.1, 0.12, 0.5, 10);
             const mat = new THREE.MeshBasicMaterial({ color: 0xff3300 });
             const mesh = new THREE.Mesh(geom, mat);
             mesh.rotation.x = Math.PI / 2;
             group.add(mesh);
 
-            const light = new THREE.PointLight(0xff6600, 1.5, 6);
+            // Glowing rocket thruster flame
+            const flameGeom = new THREE.ConeGeometry(0.14, 0.45, 8);
+            const flameMat = new THREE.MeshBasicMaterial({ color: 0xffff33 });
+            const flame = new THREE.Mesh(flameGeom, flameMat);
+            flame.rotation.x = -Math.PI / 2;
+            flame.position.set(0, 0, 0.35);
+            group.add(flame);
+
+            const light = new THREE.PointLight(0xff5500, 3.0, 9);
             group.add(light);
         } else if (isBFG) {
-            // Giant green BFG orb
-            const geom = new THREE.SphereGeometry(0.45, 16, 16);
+            // Giant apocalyptic green BFG energy orb with double-layer core
+            const geom = new THREE.SphereGeometry(0.55, 16, 16);
             const mat = new THREE.MeshBasicMaterial({ color: 0x00ff44 });
             const mesh = new THREE.Mesh(geom, mat);
             group.add(mesh);
 
-            const light = new THREE.PointLight(0x00ff33, 4.0, 12);
+            const coreGeom = new THREE.SphereGeometry(0.32, 12, 12);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xddff88 });
+            const coreMesh = new THREE.Mesh(coreGeom, coreMat);
+            group.add(coreMesh);
+
+            const light = new THREE.PointLight(0x00ff44, 7.0, 18);
             group.add(light);
         } else {
-            // Plasma sphere
-            const geom = new THREE.SphereGeometry(0.18, 8, 8);
+            // Superheated plasma bolt with inner white core & cyan halo
+            const geom = new THREE.SphereGeometry(0.25, 12, 12);
             const mat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
             const mesh = new THREE.Mesh(geom, mat);
             group.add(mesh);
 
-            const light = new THREE.PointLight(0x00aaff, 1.8, 5);
+            const coreGeom = new THREE.SphereGeometry(0.14, 8, 8);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const coreMesh = new THREE.Mesh(coreGeom, coreMat);
+            group.add(coreMesh);
+
+            const light = new THREE.PointLight(0x00ddff, 3.5, 8);
             group.add(light);
         }
 
@@ -543,20 +600,25 @@ class WeaponSystem {
         }
     }
 
-    // Legendary Railgun Spiral Visual
+    // Legendary Railgun: Blinding Neon Helix Beam with Illuminating Trail
     createRailgunBeam(start, end) {
         const dist = start.distanceTo(end);
         const dir = end.clone().sub(start).normalize();
 
-        // 1. Core straight beam
+        // 1. Blinding white-cyan Core Beam with cylinder glow
         const coreGeom = new THREE.BufferGeometry().setFromPoints([start, end]);
-        const coreMat = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
+        const coreMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 3 });
         const coreLine = new THREE.Line(coreGeom, coreMat);
         this.scene.add(coreLine);
 
-        // 2. Swirling spiral beam
+        // 2. Glowing Cyan Secondary Beam
+        const cyanMat = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2, transparent: true, opacity: 0.9 });
+        const cyanLine = new THREE.Line(coreGeom, cyanMat);
+        this.scene.add(cyanLine);
+
+        // 3. Swirling Emerald & Cyan Spiral Energy Rings
         const spiralPoints = [];
-        const segments = Math.floor(dist * 6);
+        const segments = Math.floor(dist * 8);
         const up = new THREE.Vector3(0, 1, 0);
         const right = new THREE.Vector3().crossVectors(dir, up).normalize();
         const realUp = new THREE.Vector3().crossVectors(right, dir).normalize();
@@ -564,120 +626,185 @@ class WeaponSystem {
         for (let i = 0; i <= segments; i++) {
             const fraction = i / segments;
             const p = start.clone().lerp(end, fraction);
-            const angle = fraction * Math.PI * 18;
-            const radius = 0.2;
+            const angle = fraction * Math.PI * 22;
+            const radius = 0.28;
             p.add(right.clone().multiplyScalar(Math.cos(angle) * radius));
             p.add(realUp.clone().multiplyScalar(Math.sin(angle) * radius));
             spiralPoints.push(p);
         }
 
         const spiralGeom = new THREE.BufferGeometry().setFromPoints(spiralPoints);
-        const spiralMat = new THREE.LineBasicMaterial({ color: 0x33ff66, linewidth: 2 });
+        const spiralMat = new THREE.LineBasicMaterial({ color: 0x00ff88, linewidth: 2, transparent: true, opacity: 0.95 });
         const spiralLine = new THREE.Line(spiralGeom, spiralMat);
         this.scene.add(spiralLine);
 
-        this.beams.push({ obj1: coreLine, obj2: spiralLine, age: 0, maxAge: 0.75 });
+        // Dynamic light along the rail path
+        const midPoint = start.clone().lerp(end, 0.5);
+        const railLight = new THREE.PointLight(0x00ffff, 4.0, Math.min(25, dist));
+        railLight.position.copy(midPoint);
+        this.scene.add(railLight);
+        setTimeout(() => this.scene.remove(railLight), 120);
+
+        this.beams.push({ obj1: coreLine, obj2: cyanLine, obj3: spiralLine, age: 0, maxAge: 0.85 });
     }
 
+    // High-visibility Hyper-Tracer with golden streak
     createBulletTracer(start, end) {
         const geom = new THREE.BufferGeometry().setFromPoints([start, end]);
-        const mat = new THREE.LineBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0.8 });
+        const mat = new THREE.LineBasicMaterial({ color: 0xffea00, transparent: true, opacity: 0.95 });
         const line = new THREE.Line(geom, mat);
         this.scene.add(line);
-        this.beams.push({ obj1: line, obj2: null, age: 0, maxAge: 0.1 });
+        this.beams.push({ obj1: line, obj2: null, age: 0, maxAge: 0.12 });
     }
 
+    // BFG10K Detonation: Cataclysmic green shockwave, plasma eruption, and blinding flash
     spawnBFGExplosionVisual(pos) {
-        const light = new THREE.PointLight(0x00ff44, 5, 14);
+        // Blinding green flash
+        const light = new THREE.PointLight(0x00ff44, 12, 28);
         light.position.copy(pos);
         this.scene.add(light);
-        setTimeout(() => this.scene.remove(light), 150);
+        setTimeout(() => this.scene.remove(light), 180);
 
-        const count = Math.min(20, Math.max(5, this.maxParticles - this.particles.length));
+        // Shockwave expansion ring
+        this.spawnShockwaveRing(pos, 0x00ff44, 9.0, 0.45);
+
+        // Fiery green energy debris
+        const count = Math.min(32, Math.max(10, this.maxParticles - this.particles.length));
         for (let i = 0; i < count; i++) {
             const vel = new THREE.Vector3(
-                (Math.random() - 0.5) * 14,
-                (Math.random() - 0.2) * 12,
-                (Math.random() - 0.5) * 14
+                (Math.random() - 0.5) * 22,
+                (Math.random() * 16 + 2),
+                (Math.random() - 0.5) * 22
             );
             const mesh = new THREE.Mesh(
-                this._boxGeomSmall,
-                Math.random() > 0.3 ? this._bfgMat1 : this._bfgMat2
+                Math.random() > 0.4 ? this._boxGeomMedium : this._boxGeomSmall,
+                Math.random() > 0.5 ? this._bfgCoreMat : (Math.random() > 0.5 ? this._bfgMat1 : this._bfgMat2)
             );
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.45 + Math.random() * 0.25 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.45 + Math.random() * 0.35 });
+        }
+
+        // Camera impact shake
+        if (window.gameEngine) {
+            window.gameEngine.cameraShakeIntensity = Math.max(window.gameEngine.cameraShakeIntensity, 0.65);
+            window.gameEngine.cameraShakeDuration = Math.max(window.gameEngine.cameraShakeDuration, 0.4);
         }
     }
 
+    // Rocket Explosion: Roaring Fireball, shockwave blast ring, fiery shrapnel, and amber flash
     spawnExplosionVisual(pos) {
-        // Flash light
-        const light = new THREE.PointLight(0xff6600, 4, 10);
+        // High-intensity explosion light
+        const light = new THREE.PointLight(0xff5500, 9, 20);
         light.position.copy(pos);
         this.scene.add(light);
-        setTimeout(() => this.scene.remove(light), 100);
+        setTimeout(() => this.scene.remove(light), 140);
 
-        // Debris / Fireball particles using pooled geometries
-        const count = Math.min(16, Math.max(4, this.maxParticles - this.particles.length));
+        // Dynamic shockwave ring expanding outward
+        this.spawnShockwaveRing(pos, 0xffaa00, 6.0, 0.35);
+
+        // Fireball and burning shrapnel particles
+        const count = Math.min(28, Math.max(8, this.maxParticles - this.particles.length));
         for (let i = 0; i < count; i++) {
             const vel = new THREE.Vector3(
-                (Math.random() - 0.5) * 10,
-                (Math.random() - 0.2) * 9,
-                (Math.random() - 0.5) * 10
+                (Math.random() - 0.5) * 16,
+                (Math.random() * 14 + 1),
+                (Math.random() - 0.5) * 16
             );
+            const pMat = Math.random() > 0.6 ? this._fireMat3 : (Math.random() > 0.3 ? this._fireMat2 : this._fireMat1);
             const mesh = new THREE.Mesh(
-                this._boxGeomSmall,
-                Math.random() > 0.3 ? this._fireMat1 : this._fireMat2
+                Math.random() > 0.4 ? this._boxGeomMedium : this._boxGeomSmall,
+                pMat
             );
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.35 + Math.random() * 0.2 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.38 + Math.random() * 0.28 });
         }
+
+        // Camera kick on nearby explosions
+        if (window.gameEngine && window.gameEngine.player) {
+            const dist = pos.distanceTo(window.gameEngine.player.position);
+            if (dist < 18) {
+                const intensity = (1 - dist / 18) * 0.45;
+                window.gameEngine.cameraShakeIntensity = Math.max(window.gameEngine.cameraShakeIntensity, intensity);
+                window.gameEngine.cameraShakeDuration = Math.max(window.gameEngine.cameraShakeDuration, 0.25);
+            }
+        }
+    }
+
+    // Expanding 3D Shockwave Ring Animation
+    spawnShockwaveRing(pos, colorHex, maxScale = 5.0, duration = 0.35) {
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: colorHex,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.95
+        });
+        const ringMesh = new THREE.Mesh(this._ringGeom, ringMat);
+        ringMesh.position.copy(pos);
+        ringMesh.rotation.x = -Math.PI / 2;
+        this.scene.add(ringMesh);
+
+        this.shockwaves.push({
+            mesh: ringMesh,
+            mat: ringMat,
+            age: 0,
+            duration: duration,
+            maxScale: maxScale
+        });
     }
 
     spawnRocketSmoke(pos) {
         if (this.particles.length >= this.maxParticles) return;
-        const mesh = new THREE.Mesh(this._boxGeomTiny, this._smokeMat);
+        const mesh = new THREE.Mesh(this._boxGeomSmall, this._smokeMat);
         mesh.position.copy(pos);
         this.scene.add(mesh);
         this.particles.push({
             mesh,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() * 0.6), (Math.random() - 0.5) * 0.4),
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() * 0.8), (Math.random() - 0.5) * 0.5),
             age: 0,
             maxAge: 0.35
         });
     }
 
+    // Plasma Impact: High-voltage cyan/electric sparks with luminous pop
     spawnPlasmaImpact(pos) {
-        const count = Math.min(8, Math.max(2, this.maxParticles - this.particles.length));
+        const light = new THREE.PointLight(0x00e5ff, 4.0, 9);
+        light.position.copy(pos);
+        this.scene.add(light);
+        setTimeout(() => this.scene.remove(light), 90);
+
+        const count = Math.min(14, Math.max(4, this.maxParticles - this.particles.length));
         for (let i = 0; i < count; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
-            const mesh = new THREE.Mesh(this._boxGeomTiny, this._plasmaMat);
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 11, (Math.random() - 0.2) * 10, (Math.random() - 0.5) * 11);
+            const mesh = new THREE.Mesh(this._boxGeomSmall, Math.random() > 0.4 ? this._plasmaMat : this._plasmaCoreMat);
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.25 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.28 });
         }
     }
 
+    // Blood Particles on hitting enemy: Deep crimson & glowing spray
     spawnBloodParticles(pos) {
-        const count = Math.min(8, Math.max(2, this.maxParticles - this.particles.length));
+        const count = Math.min(18, Math.max(6, this.maxParticles - this.particles.length));
         for (let i = 0; i < count; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 3.5, (Math.random() - 0.5) * 4);
-            const mesh = new THREE.Mesh(this._boxGeomTiny, this._bloodMat);
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 7, Math.random() * 6 + 1, (Math.random() - 0.5) * 7);
+            const mesh = new THREE.Mesh(this._boxGeomSmall, Math.random() > 0.4 ? this._bloodMat : this._bloodGlowMat);
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.3 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.35 });
         }
     }
 
+    // Impact Sparks on wall hit: Incandescent ricochet shower
     spawnImpactSparks(pos) {
-        const count = Math.min(4, Math.max(1, this.maxParticles - this.particles.length));
+        const count = Math.min(10, Math.max(3, this.maxParticles - this.particles.length));
         for (let i = 0; i < count; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 4, (Math.random() - 0.5) * 4);
-            const mesh = new THREE.Mesh(this._boxGeomTiny, this._sparkMat);
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 9, Math.random() * 8 + 1, (Math.random() - 0.5) * 9);
+            const mesh = new THREE.Mesh(this._boxGeomTiny, Math.random() > 0.5 ? this._sparkMat : this._sparkWhiteMat);
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.2 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.24 });
         }
         this.addImpactDecal(pos);
     }
@@ -697,8 +824,11 @@ class WeaponSystem {
     showHitMarker() {
         const marker = document.getElementById('hit-marker');
         if (marker) {
-            marker.style.opacity = '1';
-            setTimeout(() => { marker.style.opacity = '0'; }, 80);
+            marker.classList.add('active');
+            clearTimeout(this._hitMarkerTimeout);
+            this._hitMarkerTimeout = setTimeout(() => {
+                marker.classList.remove('active');
+            }, 100);
         }
     }
 
@@ -733,14 +863,32 @@ class WeaponSystem {
             if (alpha <= 0) {
                 if (b.obj1) this.scene.remove(b.obj1);
                 if (b.obj2) this.scene.remove(b.obj2);
+                if (b.obj3) this.scene.remove(b.obj3);
                 this.beams.splice(i, 1);
             } else {
                 if (b.obj1 && b.obj1.material) b.obj1.material.opacity = alpha;
                 if (b.obj2 && b.obj2.material) b.obj2.material.opacity = alpha;
+                if (b.obj3 && b.obj3.material) b.obj3.material.opacity = alpha;
             }
         }
 
-        // 3. Particles
+        // 3. Shockwave Rings Expansion & Fade
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+            const s = this.shockwaves[i];
+            s.age += dt;
+            const progress = s.age / s.duration;
+            if (progress >= 1.0) {
+                this.scene.remove(s.mesh);
+                s.mat.dispose();
+                this.shockwaves.splice(i, 1);
+            } else {
+                const curScale = 1.0 + progress * s.maxScale;
+                s.mesh.scale.set(curScale, curScale, curScale);
+                s.mat.opacity = Math.max(0, 0.95 * (1.0 - progress));
+            }
+        }
+
+        // 4. Particles (Fiery shrapnel, sparks, blood spray)
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             p.age += dt;
@@ -748,7 +896,7 @@ class WeaponSystem {
                 this.scene.remove(p.mesh);
                 this.particles.splice(i, 1);
             } else {
-                p.vel.y -= 15.0 * dt; // gravity
+                p.vel.y -= 18.0 * dt; // gravity
                 p.mesh.position.add(p.vel.clone().multiplyScalar(dt));
             }
         }
