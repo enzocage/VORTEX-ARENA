@@ -20,7 +20,8 @@ class QuakeTextures {
         const canvas = this.createCanvas(512, 512);
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#2c2522';
+        // Clean neutral gothic stone base (increased ambient visibility)
+        ctx.fillStyle = '#443d38';
         ctx.fillRect(0, 0, 512, 512);
 
         const rows = 16;
@@ -34,16 +35,18 @@ class QuakeTextures {
                 const x = c * colW + offset;
                 const y = r * rowH;
 
-                const brightness = Math.floor(45 + Math.random() * 35);
-                ctx.fillStyle = `rgb(${brightness + 10}, ${brightness}, ${brightness - 5})`;
+                const brightness = Math.floor(75 + Math.random() * 45);
+                ctx.fillStyle = `rgb(${brightness + 12}, ${brightness + 4}, ${brightness - 6})`;
                 ctx.fillRect(x + 2, y + 2, colW - 4, rowH - 4);
 
-                // Brick bevel/highlight
-                ctx.strokeStyle = `rgba(255,255,255,0.14)`;
+                // Distinct crisp brick bevel highlight for clear architectural visibility
+                ctx.strokeStyle = `rgba(255, 245, 230, 0.28)`;
+                ctx.lineWidth = 1.5;
                 ctx.strokeRect(x + 3, y + 3, colW - 6, rowH - 6);
 
-                // Deep mortar shadow
-                ctx.strokeStyle = '#0e0b09';
+                // Deep mortar definition
+                ctx.strokeStyle = '#1a1410';
+                ctx.lineWidth = 2;
                 ctx.strokeRect(x + 1, y + 1, colW - 2, rowH - 2);
             }
         }
@@ -52,7 +55,7 @@ class QuakeTextures {
         const imgData = ctx.getImageData(0, 0, 512, 512);
         const data = imgData.data;
         for (let i = 0; i < data.length; i += 4) {
-            const noise = (Math.random() - 0.5) * 28;
+            const noise = (Math.random() - 0.5) * 22;
             data[i] = Math.min(255, Math.max(0, data[i] + noise));
             data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
             data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
@@ -66,32 +69,33 @@ class QuakeTextures {
         return tex;
     }
 
-    // Heavy Industrial Metal with Rivets, Grime & Edge Wear
+    // Heavy Industrial Metal with Rivets, Grime & Crisp Edge Wear
     getMetalPanel() {
         if (this.cache.metal) return this.cache.metal;
         const canvas = this.createCanvas(512, 512);
         const ctx = canvas.getContext('2d');
 
-        ctx.fillStyle = '#1e2126';
+        // Brighter steel-grey chassis
+        ctx.fillStyle = '#3a3e47';
         ctx.fillRect(0, 0, 512, 512);
 
         // 4 Large Metal Plates
-        ctx.strokeStyle = '#0b0d10';
+        ctx.strokeStyle = '#181b22';
         ctx.lineWidth = 5;
         ctx.strokeRect(4, 4, 250, 250);
         ctx.strokeRect(258, 4, 250, 250);
         ctx.strokeRect(4, 258, 250, 250);
         ctx.strokeRect(258, 258, 250, 250);
 
-        // Bevel highlights
-        ctx.strokeStyle = '#3e444f';
-        ctx.lineWidth = 2;
+        // Crisp specular bevel highlights
+        ctx.strokeStyle = '#717b8c';
+        ctx.lineWidth = 2.5;
         ctx.strokeRect(6, 6, 246, 246);
         ctx.strokeRect(260, 6, 246, 246);
         ctx.strokeRect(6, 260, 246, 246);
         ctx.strokeRect(260, 260, 246, 246);
 
-        // Hex rivets with metallic shading
+        // Hex rivets with bright metallic highlight
         const rivetPositions = [
             [15, 15], [240, 15], [15, 240], [240, 240],
             [270, 15], [495, 15], [270, 240], [495, 240],
@@ -100,20 +104,20 @@ class QuakeTextures {
         ];
 
         rivetPositions.forEach(([rx, ry]) => {
-            ctx.fillStyle = '#555e6b';
+            ctx.fillStyle = '#8f9baa';
             ctx.beginPath();
             ctx.arc(rx, ry, 5, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = '#0f1114';
+            ctx.fillStyle = '#14181f';
             ctx.beginPath();
             ctx.arc(rx + 1, ry + 1, 2.5, 0, Math.PI * 2);
             ctx.fill();
         });
 
-        // Grime & Battle Scratches
+        // Grime & Battle Scratches with high contrast
         for (let i = 0; i < 70; i++) {
-            ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.5)';
+            ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.45)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             const sx = Math.random() * 512;

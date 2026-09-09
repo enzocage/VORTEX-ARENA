@@ -219,21 +219,102 @@ class QuakeAudio {
 
         osc.type = 'sawtooth';
         if (isFatal) {
-            osc.frequency.setValueAtTime(180, t);
-            osc.frequency.exponentialRampToValueAtTime(50, t + 0.45);
-            gain.gain.setValueAtTime(0.5, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.45);
+            osc.frequency.setValueAtTime(220, t);
+            osc.frequency.exponentialRampToValueAtTime(35, t + 0.6);
+            gain.gain.setValueAtTime(0.7, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
         } else {
-            osc.frequency.setValueAtTime(150, t);
-            osc.frequency.exponentialRampToValueAtTime(90, t + 0.15);
-            gain.gain.setValueAtTime(0.3, t);
+            osc.frequency.setValueAtTime(160, t);
+            osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
+            gain.gain.setValueAtTime(0.35, t);
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
         }
 
         osc.connect(gain);
         gain.connect(this.sfxGain);
         osc.start(t);
-        osc.stop(t + (isFatal ? 0.45 : 0.15));
+        osc.stop(t + (isFatal ? 0.6 : 0.15));
+    }
+
+    // Gigantic Cataclysmic Death Explosion with Sub-Bass Shockwave and Tinnitus Ear Ringing
+    playMassiveDeathExplosion() {
+        if (!this.initialized || !this.ctx) return;
+        const t = this.ctx.currentTime;
+
+        // 1. Ultra Sub-Bass Shockwave (20Hz to 80Hz rumble that shakes speakers)
+        const subOsc = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(140, t);
+        subOsc.frequency.exponentialRampToValueAtTime(25, t + 1.8);
+        subGain.gain.setValueAtTime(1.0, t);
+        subGain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
+
+        subOsc.connect(subGain);
+        subGain.connect(this.masterGain);
+        subOsc.start(t);
+        subOsc.stop(t + 2.2);
+
+        // 2. High-energy explosion fireball crackle & roar (Noise Buffer)
+        const bufferSize = Math.floor(this.ctx.sampleRate * 2.5);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            // Decaying turbulent noise
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.8);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        // Resonant lowpass filter sweep
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1800, t);
+        filter.frequency.exponentialRampToValueAtTime(120, t + 1.6);
+        filter.Q.value = 3.5;
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.9, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.005, t + 2.4);
+
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(this.masterGain);
+        noise.start(t);
+
+        // 3. Tinnitus Ear Ringing effect (High-pitch sine tone slowly fading)
+        const ringOsc = this.ctx.createOscillator();
+        const ringGain = this.ctx.createGain();
+        ringOsc.type = 'sine';
+        ringOsc.frequency.setValueAtTime(3200, t + 0.1);
+        ringOsc.frequency.exponentialRampToValueAtTime(2800, t + 2.5);
+
+        ringGain.gain.setValueAtTime(0.001, t);
+        ringGain.gain.linearRampToValueAtTime(0.25, t + 0.15);
+        ringGain.gain.exponentialRampToValueAtTime(0.001, t + 2.6);
+
+        ringOsc.connect(ringGain);
+        ringGain.connect(this.masterGain);
+        ringOsc.start(t);
+        ringOsc.stop(t + 2.6);
+
+        // 4. Secondary Distant Detonations
+        [0.18, 0.38, 0.65].forEach((delay, idx) => {
+            const extraT = t + delay;
+            const detOsc = this.ctx.createOscillator();
+            const detGain = this.ctx.createGain();
+            detOsc.type = 'triangle';
+            detOsc.frequency.setValueAtTime(90 - idx * 15, extraT);
+            detOsc.frequency.exponentialRampToValueAtTime(30, extraT + 0.5);
+
+            detGain.gain.setValueAtTime(0.5 - idx * 0.1, extraT);
+            detGain.gain.exponentialRampToValueAtTime(0.01, extraT + 0.6);
+
+            detOsc.connect(detGain);
+            detGain.connect(this.masterGain);
+            detOsc.start(extraT);
+            detOsc.stop(extraT + 0.6);
+        });
     }
 
     // 3D Positional Audio Player (Stereo spatial sound)
@@ -378,70 +459,59 @@ class QuakeAudio {
 
     playShotgun() {
         const t = this.ctx.currentTime;
-        // Heavy boom
+        // Heavy multi-stage acoustic punch: low boom + mid mechanical crack + muzzle noise
         const osc = this.ctx.createOscillator();
         const oscGain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(140, t);
-        osc.frequency.exponentialRampToValueAtTime(30, t + 0.25);
-        oscGain.gain.setValueAtTime(0.6, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, t);
+        osc.frequency.exponentialRampToValueAtTime(32, t + 0.3);
+        oscGain.gain.setValueAtTime(0.8, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
         osc.connect(oscGain);
         oscGain.connect(this.sfxGain);
         osc.start(t);
-        osc.stop(t + 0.25);
+        osc.stop(t + 0.3);
 
-        // Noise crackle
-        const bufferSize = this.ctx.sampleRate * 0.18;
+        // Muzzle blast noise with high-impact bandpass
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.22);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.2));
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.18));
         }
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, t);
+        filter.frequency.exponentialRampToValueAtTime(350, t + 0.2);
+
         const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.5, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
-        noise.connect(noiseGain);
+        noiseGain.gain.setValueAtTime(0.7, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+        noise.connect(filter);
+        filter.connect(noiseGain);
         noiseGain.connect(this.sfxGain);
         noise.start(t);
     }
 
     playRocketLaunch() {
         const t = this.ctx.currentTime;
-        // Ignition whistle + thrust
+        // Rocket motor ignition whoosh + pressurized jet exhaust
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, t);
-        osc.frequency.linearRampToValueAtTime(320, t + 0.2);
-        gain.gain.setValueAtTime(0.35, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.linearRampToValueAtTime(420, t + 0.25);
+        gain.gain.setValueAtTime(0.45, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.28);
         osc.connect(gain);
         gain.connect(this.sfxGain);
         osc.start(t);
-        osc.stop(t + 0.22);
-    }
+        osc.stop(t + 0.28);
 
-    playExplosion() {
-        if (!this.initialized) return;
-        const t = this.ctx.currentTime;
-        // Deep bass rumble
-        const osc = this.ctx.createOscillator();
-        const oscGain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(120, t);
-        osc.frequency.exponentialRampToValueAtTime(25, t + 0.5);
-        oscGain.gain.setValueAtTime(0.7, t);
-        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-        osc.connect(oscGain);
-        oscGain.connect(this.sfxGain);
-        osc.start(t);
-        osc.stop(t + 0.5);
-
-        // Debris noise
-        const bufferSize = this.ctx.sampleRate * 0.45;
+        // Rocket booster thrust noise
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.28);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -450,13 +520,51 @@ class QuakeAudio {
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
         const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(650, t);
+        filter.Q.value = 1.8;
+        const nGain = this.ctx.createGain();
+        nGain.gain.setValueAtTime(0.35, t);
+        nGain.gain.exponentialRampToValueAtTime(0.01, t + 0.28);
+        noise.connect(filter);
+        filter.connect(nGain);
+        nGain.connect(this.sfxGain);
+        noise.start(t);
+    }
+
+    playExplosion() {
+        if (!this.initialized) return;
+        const t = this.ctx.currentTime;
+        // Heavy bass detonation
+        const osc = this.ctx.createOscillator();
+        const oscGain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(28, t + 0.65);
+        oscGain.gain.setValueAtTime(0.85, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.005, t + 0.7);
+        osc.connect(oscGain);
+        oscGain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.7);
+
+        // Debris & supersonic pressure wave
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.65);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.4);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, t);
-        filter.frequency.exponentialRampToValueAtTime(150, t + 0.4);
+        filter.frequency.setValueAtTime(1400, t);
+        filter.frequency.exponentialRampToValueAtTime(140, t + 0.55);
 
         const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.6, t);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.45);
+        noiseGain.gain.setValueAtTime(0.8, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.65);
 
         noise.connect(filter);
         filter.connect(noiseGain);
@@ -464,36 +572,36 @@ class QuakeAudio {
         noise.start(t);
     }
 
-    // Legendary Railgun: high-energy electric discharge + resonant hum
+    // Legendary Railgun: high-energy electric discharge + supersonic crack + resonant hum
     playRailgun() {
         const t = this.ctx.currentTime;
-        // Initial crack
+        // Supersonic sonic snap
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(1800, t);
-        osc.frequency.exponentialRampToValueAtTime(120, t + 0.35);
+        osc.frequency.setValueAtTime(2400, t);
+        osc.frequency.exponentialRampToValueAtTime(140, t + 0.38);
 
-        gain.gain.setValueAtTime(0.7, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        gain.gain.setValueAtTime(0.85, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
 
         osc.connect(gain);
         gain.connect(this.sfxGain);
         osc.start(t);
-        osc.stop(t + 0.4);
+        osc.stop(t + 0.42);
 
-        // Resonant electric buzz
+        // Resonant electric ionizing trail hum
         const hum = this.ctx.createOscillator();
         const humGain = this.ctx.createGain();
         hum.type = 'sine';
-        hum.frequency.setValueAtTime(440, t);
-        hum.frequency.exponentialRampToValueAtTime(220, t + 0.6);
-        humGain.gain.setValueAtTime(0.4, t);
-        humGain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+        hum.frequency.setValueAtTime(520, t);
+        hum.frequency.exponentialRampToValueAtTime(180, t + 0.8);
+        humGain.gain.setValueAtTime(0.5, t);
+        humGain.gain.exponentialRampToValueAtTime(0.005, t + 0.8);
         hum.connect(humGain);
         humGain.connect(this.sfxGain);
         hum.start(t);
-        hum.stop(t + 0.6);
+        hum.stop(t + 0.8);
     }
 
     playPlasmaGun() {

@@ -310,16 +310,21 @@ class LevelManager {
         const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.8 });
         const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.5, metalness: 0.6 });
 
-        // Sky & Fog
-        this.scene.background = new THREE.Color(0x181520);
-        this.scene.fog = new THREE.FogExp2(0x181520, 0.015);
+        // Sky & Fog - Clear atmospheric visibility
+        this.scene.background = new THREE.Color(0x242032);
+        this.scene.fog = new THREE.FogExp2(0x242032, 0.007); // Gentle fog so entire arena is always fully visible
 
-        // Ambient & Directional Sun Light
-        const hemi = new THREE.HemisphereLight(0xffeedd, 0x221122, 0.6);
+        // Ambient & Directional Sun Light (High visibility & contrast)
+        const hemi = new THREE.HemisphereLight(0xffeedd, 0x443355, 0.85);
         this.levelGroup.add(hemi);
-        const dir = new THREE.DirectionalLight(0xffaa66, 0.8);
-        dir.position.set(20, 40, 15);
+        const dir = new THREE.DirectionalLight(0xffca88, 1.1);
+        dir.position.set(25, 45, 20);
         this.levelGroup.add(dir);
+
+        // Fill Light for dark corners
+        const fillLight = new THREE.DirectionalLight(0x6688cc, 0.45);
+        fillLight.position.set(-25, 30, -20);
+        this.levelGroup.add(fillLight);
 
         // Arena Floor (50x50)
         this.addBox(0, -1, 0, 50, 1, 50, stoneMat);
@@ -435,11 +440,14 @@ class LevelManager {
         const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.75 });
         const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.5, metalness: 0.7 });
 
-        this.scene.background = new THREE.Color(0x100814);
-        this.scene.fog = new THREE.FogExp2(0x100814, 0.012);
+        this.scene.background = new THREE.Color(0x1a1024);
+        this.scene.fog = new THREE.FogExp2(0x1a1024, 0.006); // Clear cathedral atmosphere
 
-        const hemi = new THREE.HemisphereLight(0xddaaee, 0x221133, 0.7);
+        const hemi = new THREE.HemisphereLight(0xeeccff, 0x442255, 0.85);
         this.levelGroup.add(hemi);
+        const cathedralSun = new THREE.DirectionalLight(0xffddaa, 1.0);
+        cathedralSun.position.set(20, 50, 20);
+        this.levelGroup.add(cathedralSun);
 
         // Main Lower Floor
         this.addBox(0, -1, 0, 60, 1, 60, stoneMat);
@@ -689,15 +697,18 @@ class LevelManager {
         const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.3, metalness: 0.85 });
         const lavaMat = window.quakeTextures.getLavaMaterial();
 
-        this.scene.background = new THREE.Color(0x220502);
-        this.scene.fog = new THREE.FogExp2(0x220502, 0.015);
+        this.scene.background = new THREE.Color(0x2d0b06);
+        this.scene.fog = new THREE.FogExp2(0x2d0b06, 0.007); // Clear volcanic visibility across entire 80x80 arena
 
-        const hemi = new THREE.HemisphereLight(0xff6633, 0x110500, 0.8);
+        const hemi = new THREE.HemisphereLight(0xff8855, 0x441100, 0.9);
         this.levelGroup.add(hemi);
+        const sun = new THREE.DirectionalLight(0xffaa77, 1.0);
+        sun.position.set(30, 60, 30);
+        this.levelGroup.add(sun);
 
         // Huge Boiling Lava Lake Floor (80x80)
         this.addBox(0, -2, 0, 80, 1, 80, lavaMat);
-        const lavaCoreLight = new THREE.PointLight(0xff4400, 4, 30);
+        const lavaCoreLight = new THREE.PointLight(0xff5500, 5, 45);
         lavaCoreLight.position.set(0, 4, 0);
         this.levelGroup.add(lavaCoreLight);
 
@@ -780,12 +791,15 @@ class LevelManager {
         const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.85 });
         const metalMat = new THREE.MeshStandardMaterial({ map: metalTex, roughness: 0.45, metalness: 0.7 });
 
-        this.scene.background = new THREE.Color(0x050408);
-        this.scene.fog = new THREE.FogExp2(0x050408, 0.02);
+        this.scene.background = new THREE.Color(0x101518);
+        this.scene.fog = new THREE.FogExp2(0x101518, 0.007); // High visibility across entire crypt
 
-        // Low, eerie green-cyan ambient crypt lighting
-        const hemi = new THREE.HemisphereLight(0x44ddaa, 0x051109, 0.6);
+        // Crisp emerald & spectral ambient crypt lighting
+        const hemi = new THREE.HemisphereLight(0x66ffcc, 0x152220, 0.85);
         this.levelGroup.add(hemi);
+        const cryptSun = new THREE.DirectionalLight(0x88ffdd, 0.7);
+        cryptSun.position.set(20, 40, 15);
+        this.levelGroup.add(cryptSun);
 
         // Main Crypt Floor (70x70)
         this.addBox(0, -1, 0, 70, 1, 70, stoneMat);

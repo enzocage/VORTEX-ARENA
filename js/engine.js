@@ -56,6 +56,9 @@ class GameEngine {
         this.lastTime = performance.now();
         this.faceDamageTimer = 0;
         this.faceTimer = 0;
+        this.deathFreezeTimer = 0;
+        this.cameraShakeIntensity = 0;
+        this.cameraShakeDuration = 0;
         this._lastH = -1;
         this._lastA = -1;
         this._lastAmmo = -1;
@@ -268,16 +271,144 @@ class GameEngine {
             attacker.frags++;
         }
 
+        // Freeze player movement in place for dramatic death sequence
+        this.player.velocity.set(0, 0, 0);
+        this.deathFreezeTimer = 2.4; // Freeze player for 2.4 seconds
+
+        // Trigger massive cataclysmic camera shake
+        this.cameraShakeIntensity = 1.6;
+        this.cameraShakeDuration = 2.2;
+
+        // Visual Gigantic Explosion & Fireball shockwave in front of player eye
+        const deathPos = this.player.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+        this.spawnGiganticDeathExplosion(deathPos);
+
+        // Play thunderous cataclysmic explosion sound & ear ringing
+        if (window.quakeAudio) {
+            window.quakeAudio.playMassiveDeathExplosion();
+        }
+
+        // Blinding death flash and blood-red vignette
+        const deathFlash = document.getElementById('death-flash');
+        if (deathFlash) {
+            deathFlash.style.opacity = '1.0';
+            setTimeout(() => {
+                deathFlash.style.transition = 'opacity 1.8s cubic-bezier(0.25, 1, 0.5, 1)';
+                deathFlash.style.opacity = '0';
+            }, 100);
+        }
+
         this.damageOverlay.style.opacity = '1.0';
 
-        // Show Game Over modal after short delay
+        // Show Game Over modal after dramatic explosion delay
         setTimeout(() => {
             if (!this.matchActive) return;
             document.exitPointerLock();
             const modal = document.getElementById('game-over-modal');
             modal.style.display = 'flex';
             window.quakeAudio.announce("You have been fragged!");
-        }, 1200);
+        }, 2400);
+    }
+
+    spawnGiganticDeathExplosion(pos) {
+        // Colossal blinding PointLight that illuminates the entire arena
+        const deathLight = new THREE.PointLight(0xff6600, 15, 60);
+        deathLight.position.copy(pos);
+        this.scene.add(deathLight);
+
+        // Huge expanding fireball sphere
+        const fireSphereGeom = new THREE.SphereGeometry(2.5, 16, 16);
+        const fireSphereMat = new THREE.MeshBasicMaterial({
+            color: 0xff4400,
+            transparent: true,
+            opacity: 0.9
+        });
+        const fireball = new THREE.Mesh(fireSphereGeom, fireSphereMat);
+        fireball.position.copy(pos);
+        this.scene.add(fireball);
+
+        // Expanding shockwave ring along the ground
+        const ringGeom = new THREE.RingGeometry(1, 2.5, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffaa00,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.95
+        });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(pos.x, pos.y - 0.9, pos.z);
+        this.scene.add(ring);
+
+        // High-volume fiery debris particles
+        const debrisList = [];
+        const debrisCount = 60;
+        const boxGeom = new THREE.BoxGeometry(0.35, 0.35, 0.35);
+        const debrisColors = [0xff2200, 0xff7700, 0xffdd00, 0x333333];
+
+        for (let i = 0; i < debrisCount; i++) {
+            const mat = new THREE.MeshBasicMaterial({
+                color: debrisColors[Math.floor(Math.random() * debrisColors.length)]
+            });
+            const dMesh = new THREE.Mesh(boxGeom, mat);
+            dMesh.position.copy(pos);
+            this.scene.add(dMesh);
+            debrisList.push({
+                mesh: dMesh,
+                vel: new THREE.Vector3(
+                    (Math.random() - 0.5) * 22,
+                    Math.random() * 18 + 4,
+                    (Math.random() - 0.5) * 22
+                ),
+                rotVel: new THREE.Vector3(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                )
+            });
+        }
+
+        // Animate explosion shockwave and particles
+        let elapsed = 0;
+        const animInterval = setInterval(() => {
+            elapsed += 0.016;
+            const progress = elapsed / 2.2;
+            if (progress >= 1.0) {
+                clearInterval(animInterval);
+                this.scene.remove(deathLight);
+                this.scene.remove(fireball);
+                this.scene.remove(ring);
+                fireSphereGeom.dispose();
+                fireSphereMat.dispose();
+                ringGeom.dispose();
+                ringMat.dispose();
+                debrisList.forEach(d => {
+                    this.scene.remove(d.mesh);
+                    d.mesh.material.dispose();
+                });
+                boxGeom.dispose();
+                return;
+            }
+
+            // Expand fireball and fade
+            const scale = 1.0 + progress * 6.0;
+            fireball.scale.set(scale, scale, scale);
+            fireSphereMat.opacity = Math.max(0, 0.95 * (1 - progress));
+            deathLight.intensity = Math.max(0, 15 * (1 - progress));
+
+            // Expand ground ring
+            const ringScale = 1.0 + progress * 14.0;
+            ring.scale.set(ringScale, ringScale, ringScale);
+            ringMat.opacity = Math.max(0, 0.95 * (1 - progress * 1.2));
+
+            // Move debris with gravity
+            debrisList.forEach(d => {
+                d.vel.y -= 25.0 * 0.016;
+                d.mesh.position.addScaledVector(d.vel, 0.016);
+                d.mesh.rotation.x += d.rotVel.x * 0.016;
+                d.mesh.rotation.y += d.rotVel.y * 0.016;
+            });
+        }, 16);
     }
 
     respawnPlayer() {
@@ -290,9 +421,16 @@ class GameEngine {
         this.player.armor = 50;
         this.player.alive = true;
         this.player.quadTime = 0;
+        this.deathFreezeTimer = 0;
+        this.cameraShakeDuration = 0;
+        this.cameraShakeIntensity = 0;
+        this.camera.rotation.z = 0;
 
         document.getElementById('game-over-modal').style.display = 'none';
         this.damageOverlay.style.opacity = '0';
+        const deathFlash = document.getElementById('death-flash');
+        if (deathFlash) deathFlash.style.opacity = '0';
+
         this.renderer.domElement.requestPointerLock();
         this.updateHUD();
     }
@@ -476,6 +614,35 @@ class GameEngine {
                 const allTargets = [this.player, ...this.botManager.bots];
                 this.weaponSystem.fire(this.player, allTargets, this.levelManager.colliders, hasQuad);
             }
+        } else {
+            // Player is dead & frozen in place
+            if (this.deathFreezeTimer > 0) {
+                this.deathFreezeTimer -= dt;
+            }
+            // Keep eye at death position
+            this.camera.position.set(this.player.position.x, this.player.position.y + 1.6, this.player.position.z);
+            this.camera.rotation.order = 'YXZ';
+            this.camera.rotation.y = this.player.yaw;
+            this.camera.rotation.x = this.player.pitch;
+        }
+
+        // Cataclysmic Earth-Shattering Camera Shake
+        if (this.cameraShakeDuration > 0) {
+            this.cameraShakeDuration -= dt;
+            const trauma = Math.max(0, this.cameraShakeDuration / 2.2);
+            const shake = trauma * trauma * this.cameraShakeIntensity;
+
+            // Random 3D translational earth quake jitter
+            this.camera.position.x += (Math.random() - 0.5) * shake * 0.8;
+            this.camera.position.y += (Math.random() - 0.5) * shake * 0.6;
+            this.camera.position.z += (Math.random() - 0.5) * shake * 0.8;
+
+            // Angular screen shake (roll & tilt)
+            this.camera.rotation.z = (Math.random() - 0.5) * shake * 0.25;
+            this.camera.rotation.x += (Math.random() - 0.5) * shake * 0.15;
+            this.camera.rotation.y += (Math.random() - 0.5) * shake * 0.15;
+        } else {
+            this.camera.rotation.z = 0;
         }
 
         // Quad damage timer decay
