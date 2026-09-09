@@ -481,11 +481,54 @@ canvas {
     background: linear-gradient(180deg, #1f1f28 0%, #0d0d12 100%);
     border: 3px solid #ff6600;
     box-shadow: 0 0 40px rgba(255, 80, 0, 0.5), inset 0 0 20px rgba(0,0,0,0.8);
-    padding: clamp(20px, 4vh, 40px) clamp(20px, 4vw, 50px);
+    padding: clamp(14px, 2.5vh, 32px) clamp(16px, 3vw, 40px);
     border-radius: 8px;
-    width: min(92vw, 680px);
+    width: min(94vw, 680px);
     max-height: 92vh;
     overflow-y: auto;
+}
+
+/* Viewport-locked start modal with zero scrolling needed */
+.start-modal-content {
+    max-height: 96vh;
+    overflow-y: hidden !important;
+    padding: clamp(10px, 1.8vh, 20px) clamp(14px, 2.5vw, 30px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.start-modal-content .modal-title {
+    font-size: clamp(26px, 3.8vw, 46px);
+    margin-bottom: 2px;
+}
+
+.start-modal-content .modal-subtitle {
+    font-size: clamp(12px, 1.2vw, 16px);
+    margin-bottom: clamp(6px, 1vh, 12px);
+}
+
+.level-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(4px, 0.7vh, 8px);
+    width: 100%;
+}
+
+.level-selector-grid .level-btn {
+    padding: clamp(4px, 0.7vh, 8px) clamp(6px, 0.8vw, 10px);
+    font-size: clamp(12px, 1.1vw, 15px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.compact-instructions {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: clamp(2px, 0.5vh, 6px) clamp(8px, 1.5vw, 18px) !important;
+    padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 16px) !important;
+    font-size: clamp(12px, 1.15vw, 15px) !important;
+    margin-top: clamp(6px, 1vh, 12px) !important;
 }
 
 .modal-title {

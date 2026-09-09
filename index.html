@@ -124,40 +124,39 @@
 
     <!-- Start / Main Menu Modal -->
     <div class="modal-screen" id="start-modal">
-        <div class="modal-content">
+        <div class="modal-content start-modal-content">
             <h1 class="modal-title">VORTEX ARENA</h1>
             <p class="modal-subtitle">FAST-PACED 3D WEBGL ARENA FPS</p>
 
-            <div style="margin: 15px 0;">
-                <label style="color:#ffd700; font-size: 22px; display:block; margin-bottom: 8px;">WÄHLE DAS LEVEL:</label>
-                <div class="level-selector-row" style="flex-wrap: wrap;">
-                    <button class="level-btn selected" onclick="selectLevel(1, this)">1. THE COURTYARD</button>
+            <div class="level-select-container">
+                <label style="color:#ffd700; font-size: clamp(16px, 1.8vw, 20px); font-weight: bold; margin-bottom: 4px; display:block;">ARENA WÄHLEN:</label>
+                <div class="level-selector-grid">
+                    <button class="level-btn selected" onclick="selectLevel(1, this)">1. COURTYARD</button>
                     <button class="level-btn" onclick="selectLevel(2, this)">2. GOTHIC TEMPLE</button>
-                    <button class="level-btn" onclick="selectLevel(3, this)">3. THE LONGEST YARD</button>
+                    <button class="level-btn" onclick="selectLevel(3, this)">3. LONGEST YARD</button>
                     <button class="level-btn" onclick="selectLevel(4, this)">4. BRIMSTONE CORE</button>
-                    <button class="level-btn" onclick="selectLevel(5, this)">5. CRYPT OF THE DAMNED</button>
+                    <button class="level-btn" onclick="selectLevel(5, this)">5. CRYPT DAMNED</button>
                     <button class="level-btn" onclick="selectLevel(6, this)">6. SPACE CHAMBER</button>
-                    <button class="level-btn" onclick="selectLevel(7, this)">7. THE IRON CITADEL</button>
-                    <button class="level-btn" onclick="selectLevel(8, this)">8. THE VOID SANCTUARY</button>
-                    <button class="level-btn" onclick="selectLevel(9, this)">9. THE FINAL ALTAR</button>
+                    <button class="level-btn" onclick="selectLevel(7, this)">7. IRON CITADEL</button>
+                    <button class="level-btn" onclick="selectLevel(8, this)">8. VOID SANCTUARY</button>
+                    <button class="level-btn" onclick="selectLevel(9, this)">9. FINAL ALTAR</button>
                 </div>
             </div>
 
-            <div class="instructions-grid">
-                <div><strong>WASD / Pfeile</strong> : Bewegen</div>
-                <div><strong>Maus</strong> : Umschauen</div>
-                <div><strong>Linksklick</strong> : Schießen</div>
-                <div><strong>Leertaste</strong> : Springen / Strafe-Jump</div>
-                <div><strong>1 - 7 / Mausrad</strong> : Waffen wechseln</div>
-                <div><strong>TAB-Taste</strong> : Scoreboard</div>
-                <div><strong>Taste E</strong> : 3D Level-Editor an/aus</div>
-                <div><strong>Jump-Pads</strong> : Katapultieren in die Luft</div>
-                <div><strong>Rocket Jump</strong> : Rakete auf Boden schießen</div>
+            <div class="instructions-grid compact-instructions">
+                <div><strong>WASD</strong> : Move</div>
+                <div><strong>Maus</strong> : Aim & Look</div>
+                <div><strong>L-Klick</strong> : Fire</div>
+                <div><strong>Space</strong> : Jump / Strafe-Jump</div>
+                <div><strong>1-7 / Rad</strong> : Weapons</div>
+                <div><strong>TAB</strong> : Scoreboard</div>
+                <div><strong>E</strong> : 3D Level-Editor</div>
+                <div><strong>O</strong> : Options / 120 FPS</div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="start-btn" style="flex: 2;" onclick="enterArena()">ENTER ARENA</button>
-                <button class="level-btn" style="flex: 1; font-size: 24px;" onclick="openSettings()">OPTIONEN (O)</button>
+            <div style="display: flex; gap: 10px; margin-top: clamp(8px, 1.5vh, 16px);">
+                <button class="start-btn" style="flex: 2; padding: clamp(6px, 1vh, 12px) 10px;" onclick="enterArena()">ENTER ARENA</button>
+                <button class="level-btn" style="flex: 1; font-size: clamp(18px, 2vw, 24px); padding: clamp(6px, 1vh, 12px) 10px;" onclick="openSettings()">OPTIONEN (O)</button>
             </div>
         </div>
     </div>

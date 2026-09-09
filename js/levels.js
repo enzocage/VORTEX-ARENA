@@ -159,8 +159,11 @@ class LevelManager {
             const geom = new THREE.TorusGeometry(0.5, 0.15, 8, 16);
             const mat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x0088ff, emissiveIntensity: 0.9 });
             mesh = new THREE.Mesh(geom, mat);
+        } else if (type === 'weapon') {
+            // Authentic 3D visual weapon pickup model
+            mesh = this.createVisualWeaponMesh(value);
+            color = this.getWeaponPickupColor(value);
         } else {
-            // Weapon pickup (Rocket, Rail, Shotgun)
             color = 0xff3300;
             const geom = new THREE.BoxGeometry(0.9, 0.2, 0.2);
             const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.5 });
@@ -169,7 +172,15 @@ class LevelManager {
 
         group.add(mesh);
 
-        const light = new THREE.PointLight(color, 1.2, 5);
+        // Ground circular glowing pedestal ring
+        const pedestalRingGeom = new THREE.RingGeometry(0.5, 0.7, 16);
+        const pedestalRingMat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+        const ringMesh = new THREE.Mesh(pedestalRingGeom, pedestalRingMat);
+        ringMesh.rotation.x = -Math.PI / 2;
+        ringMesh.position.y = -0.75;
+        group.add(ringMesh);
+
+        const light = new THREE.PointLight(color, 1.4, 6);
         group.add(light);
 
         this.levelGroup.add(group);
@@ -183,6 +194,108 @@ class LevelManager {
             active: true,
             respawnTime: 0
         });
+    }
+
+    getWeaponPickupColor(weaponId) {
+        switch (weaponId) {
+            case 1: return 0xaaaaaa; // Gauntlet
+            case 2: return 0xffcc44; // Machinegun
+            case 3: return 0xff8800; // Shotgun
+            case 4: return 0xff2200; // Rocket Launcher
+            case 5: return 0x00e5ff; // Railgun
+            case 6: return 0xaa00ff; // Plasma Gun
+            case 7: return 0x00ff44; // BFG10K
+            default: return 0xff4400;
+        }
+    }
+
+    createVisualWeaponMesh(weaponId) {
+        const weaponGroup = new THREE.Group();
+        weaponGroup.scale.set(1.4, 1.4, 1.4); // Scale up for pickup visibility
+
+        if (weaponId === 1) {
+            // Gauntlet
+            const gBody = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8 }));
+            const sawBlade = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9 }));
+            sawBlade.rotation.x = Math.PI / 2;
+            sawBlade.position.set(0, 0, -0.25);
+            weaponGroup.add(gBody);
+            weaponGroup.add(sawBlade);
+        } else if (weaponId === 2) {
+            // Machinegun
+            const mgBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.5), new THREE.MeshStandardMaterial({ color: 0x2b2b30, metalness: 0.7 }));
+            const mgBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0x151515, metalness: 0.9 }));
+            mgBarrel.rotation.x = Math.PI / 2;
+            mgBarrel.position.set(0, 0.03, -0.4);
+            const mag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+            mag.position.set(0, -0.12, 0);
+            weaponGroup.add(mgBody);
+            weaponGroup.add(mgBarrel);
+            weaponGroup.add(mag);
+        } else if (weaponId === 3) {
+            // Double Barrel Shotgun
+            const sgBody = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.16, 0.4), new THREE.MeshStandardMaterial({ color: 0x4a2a15, roughness: 0.6 }));
+            const barrelMat = new THREE.MeshStandardMaterial({ color: 0x222225, metalness: 0.9 });
+            const b1 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.55, 8), barrelMat);
+            const b2 = b1.clone();
+            b1.rotation.x = Math.PI / 2;
+            b1.position.set(-0.045, 0.04, -0.4);
+            b2.rotation.x = Math.PI / 2;
+            b2.position.set(0.045, 0.04, -0.4);
+            weaponGroup.add(sgBody);
+            weaponGroup.add(b1);
+            weaponGroup.add(b2);
+        } else if (weaponId === 4) {
+            // Rocket Launcher (Iconic red tube + ring)
+            const rlBody = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.75, 12), new THREE.MeshStandardMaterial({ color: 0xa82015, metalness: 0.4, roughness: 0.3 }));
+            rlBody.rotation.x = Math.PI / 2;
+            const rlMuzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.2, 12), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 }));
+            rlMuzzle.rotation.x = Math.PI / 2;
+            rlMuzzle.position.set(0, 0, -0.44);
+            const rlRing = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.03, 8, 16), new THREE.MeshStandardMaterial({ color: 0xffaa00, metalness: 0.6 }));
+            rlRing.position.set(0, 0, -0.2);
+            weaponGroup.add(rlBody);
+            weaponGroup.add(rlMuzzle);
+            weaponGroup.add(rlRing);
+        } else if (weaponId === 5) {
+            // Railgun (Futuristic dark chassis + dual cyan accelerator rails)
+            const rgBody = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.15, 0.85), new THREE.MeshStandardMaterial({ color: 0x15202c, metalness: 0.8 }));
+            const railMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, emissiveIntensity: 0.8 });
+            const r1 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.75), railMat);
+            const r2 = r1.clone();
+            r1.position.set(-0.065, 0.05, -0.38);
+            r2.position.set(0.065, 0.05, -0.38);
+            weaponGroup.add(rgBody);
+            weaponGroup.add(r1);
+            weaponGroup.add(r2);
+        } else if (weaponId === 6) {
+            // Plasma Gun (Purple frame + glowing violet plasma cell)
+            const pgBody = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.6), new THREE.MeshStandardMaterial({ color: 0x251433, metalness: 0.6 }));
+            const pgCore = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), new THREE.MeshStandardMaterial({ color: 0xbb00ff, emissive: 0xbb00ff, emissiveIntensity: 1.0 }));
+            pgCore.position.set(0, 0.08, -0.1);
+            const pgNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.28, 8), new THREE.MeshStandardMaterial({ color: 0x3d4b68, metalness: 0.8 }));
+            pgNozzle.rotation.x = Math.PI / 2;
+            pgNozzle.position.set(0, 0.03, -0.38);
+            weaponGroup.add(pgBody);
+            weaponGroup.add(pgCore);
+            weaponGroup.add(pgNozzle);
+        } else if (weaponId === 7) {
+            // BFG10K (Heavy green Cybernetic chassis + glowing green reactor core)
+            const bfgBody = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 0.75), new THREE.MeshStandardMaterial({ color: 0x1f2e1f, metalness: 0.8, roughness: 0.3 }));
+            const bfgReactor = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff44, emissiveIntensity: 1.2 }));
+            bfgReactor.position.set(0, 0.11, -0.1);
+            const bfgBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.35, 12), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 }));
+            bfgBarrel.rotation.x = Math.PI / 2;
+            bfgBarrel.position.set(0, 0.03, -0.48);
+            weaponGroup.add(bfgBody);
+            weaponGroup.add(bfgReactor);
+            weaponGroup.add(bfgBarrel);
+        }
+
+        // Tilt weapon diagonally for dynamic floating showcase
+        weaponGroup.rotation.z = 0.2;
+        weaponGroup.rotation.x = 0.15;
+        return weaponGroup;
     }
 
     // ==========================================
@@ -238,25 +351,55 @@ class LevelManager {
         this.addBox(0, 0, -18, 28, 3.5, 6, metalMat);
         this.addBox(0, 0, 18, 28, 3.5, 6, metalMat);
 
-        // Balcony Stairs/Ramps
+        // East & West Perimeter Elevated Catwalks (Tier-2 Architecture)
+        this.addBox(-20, 0, 0, 6, 3.5, 30, metalMat);
+        this.addBox(20, 0, 0, 6, 3.5, 30, metalMat);
+
+        // Gothic Arches & Overhead Overpass Bridges connecting catwalks to center
+        this.addBox(-10, 3.5, 0, 14, 0.8, 4, metalMat);
+        this.addBox(10, 3.5, 0, 14, 0.8, 4, metalMat);
+
+        // Stone Arch Pillars for Bridges
+        this.addBox(-15, 0, -2, 2, 3.5, 2, stoneMat);
+        this.addBox(-15, 0, 2, 2, 3.5, 2, stoneMat);
+        this.addBox(15, 0, -2, 2, 3.5, 2, stoneMat);
+        this.addBox(15, 0, 2, 2, 3.5, 2, stoneMat);
+
+        // Balcony Stairs & Access Ramps
         this.addBox(-12, 0, -14, 4, 1.8, 3, stoneMat);
         this.addBox(12, 0, -14, 4, 1.8, 3, stoneMat);
         this.addBox(-12, 0, 14, 4, 1.8, 3, stoneMat);
         this.addBox(12, 0, 14, 4, 1.8, 3, stoneMat);
+        this.addBox(-18, 0, -14, 3, 1.8, 4, stoneMat);
+        this.addBox(18, 0, 14, 3, 1.8, 4, stoneMat);
 
-        // Pickups
+        // Courtyard Upper Sniper Loft above North Balcony (Y=7.5)
+        this.addBox(0, 7.5, -22, 16, 0.8, 5, metalMat);
+        this.addJumpPad(0, 3.5, -16, new THREE.Vector3(0, 15.0, -12.0)); // Launches to upper sniper loft!
+
+        // Pickups & Weapons (Rich 3D visual weapon placement)
         this.addPickup('armor', 0, 3.5, -18, 50); // Yellow Armor
         this.addPickup('health', 0, 3.5, 18, 50); // +50 Health
+        this.addPickup('armor', 0, 7.5, -22, 100); // Red Heavy Armor on Sniper Loft!
         this.addPickup('health', -18, 0, 0, 25);
         this.addPickup('health', 18, 0, 0, 25);
+        this.addPickup('health', -20, 3.5, 0, 50);
+        this.addPickup('health', 20, 3.5, 0, 50);
+
         this.addPickup('weapon', -18, 0, -18, 3); // Shotgun
         this.addPickup('weapon', 18, 0, 18, 5);  // Railgun
+        this.addPickup('weapon', -20, 3.5, 10, 6); // Plasma Gun on West Catwalk!
+        this.addPickup('weapon', 20, 3.5, -10, 2); // Machinegun on East Catwalk!
+        this.addPickup('weapon', 0, 7.5, -22, 5);  // Railgun on Upper Sniper Loft!
 
         // Waypoints for AI Navigation
         this.waypoints = [
             new THREE.Vector3(0, 1.2, 0),
             new THREE.Vector3(0, 3.5, -18),
             new THREE.Vector3(0, 3.5, 18),
+            new THREE.Vector3(-20, 3.5, 0),
+            new THREE.Vector3(20, 3.5, 0),
+            new THREE.Vector3(0, 7.5, -22),
             new THREE.Vector3(-15, 0, -15),
             new THREE.Vector3(15, 0, -15),
             new THREE.Vector3(-15, 0, 15),
@@ -324,6 +467,25 @@ class LevelManager {
         this.addBox(0, 6, 0, 6, 0.8, 6, metalMat);
         this.addPickup('health', 0, 6.8, 0, 100); // MEGAHEALTH (+100)!
 
+        // Cathedral Architectural Buttresses & Vaulted Columns
+        const buttressPositions = [
+            [-12, 0, -12], [12, 0, -12],
+            [-12, 0, 12], [12, 0, 12]
+        ];
+        buttressPositions.forEach(([bx, by, bz]) => {
+            this.addBox(bx, by, bz, 3.2, 14, 3.2, stoneMat);
+            // Lateral flying buttress crossbeams
+            this.addBox(bx * 0.7, 9, bz * 0.7, 4, 1.2, 4, stoneMat);
+        });
+
+        // East & West Flanking Mezzanine Terraces (Y=5)
+        this.addBox(-24, 5, 0, 8, 1, 24, metalMat);
+        this.addBox(24, 5, 0, 8, 1, 24, metalMat);
+
+        // Vaulted Arch Bridges connecting North Balcony to Mezzanine Terraces
+        this.addBox(-18, 6.5, -16, 5, 0.8, 12, metalMat);
+        this.addBox(18, 6.5, -16, 5, 0.8, 12, metalMat);
+
         // Jump Pad 1: Launches from ground directly onto North Balcony!
         // Launches with vx=0, vy=19, vz=-18
         this.addJumpPad(0, 0, -8, new THREE.Vector3(0, 20.0, -16.0));
@@ -335,15 +497,22 @@ class LevelManager {
         this.addJumpPad(-18, 0, 0, new THREE.Vector3(16.0, 16.0, 0));
         this.addJumpPad(18, 0, 0, new THREE.Vector3(-16.0, 16.0, 0));
 
+        // Jump Pad 5 & 6: Mezzanine Terraces to High Sniper Tower!
+        this.addJumpPad(-24, 5, 8, new THREE.Vector3(18.0, 15.0, 12.0));
+        this.addJumpPad(24, 5, 8, new THREE.Vector3(-18.0, 15.0, 12.0));
+
         // Teleporter on the North Balcony leading to Sniper Tower
         this.addTeleporter(12, 8, -24, new THREE.Vector3(0, 11, 24), Math.PI);
 
         // Weapons and Pickups
         this.addPickup('weapon', 0, 10.8, 24, 5); // Railgun on the sniper perch!
         this.addPickup('weapon', -12, 8.8, -24, 4); // Rocket Launcher on North Balcony
-        this.addPickup('weapon', 0, 0, 0, 6); // Plasma Gun ground center
+        this.addPickup('weapon', 0, 0, -16, 3); // Shotgun lower ground
+        this.addPickup('weapon', -24, 5.8, 0, 6); // Plasma Gun on West Mezzanine
+        this.addPickup('weapon', 24, 5.8, 0, 7);  // BFG10K on East Mezzanine!
         this.addPickup('armor', -20, 0, -20, 100); // Heavy Red Armor (+100)
         this.addPickup('armor', 20, 0, 20, 50); // Yellow Armor (+50)
+        this.addPickup('armor', 0, 8.8, -24, 50); // Yellow Armor North Balcony
         this.addPickup('health', -20, 0, 20, 25);
         this.addPickup('health', 20, 0, -20, 25);
 
@@ -413,6 +582,21 @@ class LevelManager {
         this.addBox(0, 9, -18, 6, 0.8, 6, metalMat);
         this.addPickup('quad', 0, 10.0, -18); // QUAD DAMAGE (3x Damage)!
 
+        // 5. Flanking East & West Outer Floating Satellites (Tier-2 Space Platforms)
+        this.addBox(-26, 4, 0, 10, 1.2, 10, metalMat);
+        this.addBox(26, 4, 0, 10, 1.2, 10, metalMat);
+
+        // 6. Under-deck Sub-Level Hangar Catwalk beneath the Main Platform (Y=-4)
+        this.addBox(0, -4, 0, 12, 0.8, 26, metalMat);
+        // Under-deck support pillars
+        this.addBox(-5, -4, -10, 1.5, 4, 1.5, metalMat);
+        this.addBox(5, -4, -10, 1.5, 4, 1.5, metalMat);
+        this.addBox(-5, -4, 10, 1.5, 4, 1.5, metalMat);
+        this.addBox(5, -4, 10, 1.5, 4, 1.5, metalMat);
+
+        // Teleporter from Under-deck Hangar straight up to Main Platform
+        this.addTeleporter(0, -4, -10, new THREE.Vector3(0, 2.5, 0), 0);
+
         // High-Velocity Jump Pads (The hallmark of Q3DM17!)
         // Jump Pad A: On Main platform, launches player across the abyss to the Upper Temple!
         this.addJumpPad(0, 1.5, -12, new THREE.Vector3(0, 25.0, -28.0));
@@ -426,19 +610,29 @@ class LevelManager {
         // Jump Pad D: On South Sniper Platform, launches back to center
         this.addJumpPad(0, 7.5, 36, new THREE.Vector3(0, 14.0, -26.0));
 
-        // Lateral Jump Pads on Main Platform
-        this.addJumpPad(-8, 1.5, 0, new THREE.Vector3(12.0, 16.0, -16.0));
-        this.addJumpPad(8, 1.5, 0, new THREE.Vector3(-12.0, 16.0, -16.0));
+        // Lateral Jump Pads to Outer Space Satellites
+        this.addJumpPad(-9, 1.5, 0, new THREE.Vector3(-18.0, 12.0, 0));
+        this.addJumpPad(9, 1.5, 0, new THREE.Vector3(18.0, 12.0, 0));
 
-        // Weapons
+        // Satellite Launchers returning to Main deck
+        this.addJumpPad(-26, 5.2, 0, new THREE.Vector3(20.0, 14.0, 0));
+        this.addJumpPad(26, 5.2, 0, new THREE.Vector3(-20.0, 14.0, 0));
+
+        // Weapons and Pickups with full visual 3D presentation
         this.addPickup('weapon', 0, 7.5, 40, 5); // Railgun on sniper ledge!
         this.addPickup('weapon', 0, 17.5, -42, 4); // Rocket Launcher on high temple!
-        this.addPickup('weapon', -8, 1.5, -6, 6); // Plasma Gun
-        this.addPickup('weapon', 8, 1.5, -6, 3); // Shotgun
-        this.addPickup('armor', 0, 1.5, 0, 100); // Red Armor center
+        this.addPickup('weapon', -26, 5.2, 0, 7);  // BFG10K on West Outer Satellite!
+        this.addPickup('weapon', 26, 5.2, 0, 6);   // Plasma Gun on East Outer Satellite!
+        this.addPickup('weapon', 0, -3.2, 8, 4);   // Secret Rocket Launcher in Under-deck Hangar!
+        this.addPickup('weapon', -8, 1.5, -6, 2);  // Machinegun on Main deck
+        this.addPickup('weapon', 8, 1.5, -6, 3);   // Shotgun on Main deck
+        this.addPickup('armor', 0, 1.5, 0, 100);   // Red Armor center
+        this.addPickup('armor', 0, -3.2, 0, 100);  // Red Armor Under-deck
         this.addPickup('health', -8, 1.5, 8, 50);
         this.addPickup('health', 8, 1.5, 8, 50);
         this.addPickup('health', 0, 17.5, -48, 100); // MegaHealth behind temple
+        this.addPickup('health', -26, 5.2, 3, 50);
+        this.addPickup('health', 26, 5.2, 3, 50);
 
         // Atmospheric Neon Lights in space
         const spaceLight1 = new THREE.PointLight(0x00e5ff, 3, 25);
@@ -449,6 +643,14 @@ class LevelManager {
         spaceLight2.position.set(0, 20, -42);
         this.levelGroup.add(spaceLight2);
 
+        const satLight1 = new THREE.PointLight(0x00ff44, 2.5, 16);
+        satLight1.position.set(-26, 8, 0);
+        this.levelGroup.add(satLight1);
+
+        const satLight2 = new THREE.PointLight(0xaa00ff, 2.5, 16);
+        satLight2.position.set(26, 8, 0);
+        this.levelGroup.add(satLight2);
+
         // Waypoints
         this.waypoints = [
             new THREE.Vector3(0, 1.5, 0),
@@ -457,6 +659,9 @@ class LevelManager {
             new THREE.Vector3(0, 1.5, 12),
             new THREE.Vector3(0, 7.5, 40),
             new THREE.Vector3(0, 9.8, -18),
+            new THREE.Vector3(-26, 5.2, 0),
+            new THREE.Vector3(26, 5.2, 0),
+            new THREE.Vector3(0, -3.2, 0),
             new THREE.Vector3(-8, 1.5, 0),
             new THREE.Vector3(8, 1.5, 0)
         ];
