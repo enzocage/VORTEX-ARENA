@@ -146,7 +146,11 @@ class QuakeTextures {
             roughness: 0.2
         });
 
+        let lastUpdate = 0;
         const updateLava = (time) => {
+            if (time - lastUpdate < 0.033) return; // Cap texture upload at 30 FPS
+            lastUpdate = time;
+
             const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 160);
             grad.addColorStop(0, '#ffff00');
             grad.addColorStop(0.4, '#ff4400');
@@ -155,7 +159,7 @@ class QuakeTextures {
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 256, 256);
 
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 8; i++) {
                 const bx = (Math.sin(time * 2 + i * 2) * 0.5 + 0.5) * 256;
                 const by = (Math.cos(time * 1.5 + i * 3) * 0.5 + 0.5) * 256;
                 const br = 15 + Math.sin(time * 3 + i) * 8;

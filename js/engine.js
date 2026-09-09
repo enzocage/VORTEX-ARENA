@@ -54,8 +54,16 @@ class GameEngine {
         this.matchActive = false;
         this.isPointerLocked = false;
         this.lastTime = performance.now();
-        this.faceLookDir = 0;
         this.faceDamageTimer = 0;
+        this.faceTimer = 0;
+        this._lastH = -1;
+        this._lastA = -1;
+        this._lastAmmo = -1;
+        this._lastSpeed = -1;
+
+        // FPS tracking
+        this.frameCount = 0;
+        this.lastFpsTime = performance.now();
 
         // UI references
         this.healthVal = document.getElementById('health-val');
@@ -66,6 +74,7 @@ class GameEngine {
         this.quadOverlay = document.getElementById('quad-overlay');
         this.faceCanvas = document.getElementById('hud-face-canvas');
         this.scoreboard = document.getElementById('scoreboard');
+        this.fpsElement = document.getElementById('fps-counter');
 
         this.bindEvents();
     }
@@ -75,7 +84,11 @@ class GameEngine {
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            if (this.settingsManager) {
+                this.settingsManager.applySettings();
+            } else {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
         });
 
         // Pointer Lock
@@ -376,37 +389,57 @@ class GameEngine {
         document.getElementById('frag-counter').textContent = `FRAGS: ${this.player.frags} / ${this.fragLimit}`;
     }
 
-    updateHUD() {
+    updateHUD(dt = 0.016) {
         const h = Math.max(0, Math.ceil(this.player.health));
         const a = Math.max(0, Math.ceil(this.player.armor));
         const currentWeapon = this.weaponSystem.weapons[this.weaponSystem.currentWeaponId];
         const ammo = currentWeapon.ammo === Infinity ? '∞' : currentWeapon.ammo;
 
-        this.healthVal.textContent = h;
-        this.armorVal.textContent = a;
-        this.ammoVal.textContent = ammo;
+        if (h !== this._lastH) {
+            this.healthVal.textContent = h;
+            if (h > 100) this.healthVal.style.color = '#00e5ff';
+            else if (h > 50) this.healthVal.style.color = '#00ff88';
+            else if (h > 25) this.healthVal.style.color = '#ffbb00';
+            else this.healthVal.style.color = '#ff2200';
+            this._lastH = h;
+        }
 
-        // Health color dynamics
-        if (h > 100) this.healthVal.style.color = '#00e5ff';
-        else if (h > 50) this.healthVal.style.color = '#00ff88';
-        else if (h > 25) this.healthVal.style.color = '#ffbb00';
-        else this.healthVal.style.color = '#ff2200';
+        if (a !== this._lastA) {
+            this.armorVal.textContent = a;
+            this._lastA = a;
+        }
 
-        // Speedometer (Quake units display)
+        if (ammo !== this._lastAmmo) {
+            this.ammoVal.textContent = ammo;
+            this._lastAmmo = ammo;
+        }
+
+        // Speedometer (Quake units display - updated at max 30Hz or on integer delta)
         const horizSpeed = Math.sqrt(this.player.velocity.x * this.player.velocity.x + this.player.velocity.z * this.player.velocity.z);
         const quakeSpeedUnits = Math.round(horizSpeed * 32); // Scale to classic Quake 3 units (320 to 650+)
-        this.speedometer.textContent = `SPEED: ${quakeSpeedUnits} UPS`;
+        if (Math.abs(quakeSpeedUnits - this._lastSpeed) >= 2) {
+            this.speedometer.textContent = `SPEED: ${quakeSpeedUnits} UPS`;
+            this._lastSpeed = quakeSpeedUnits;
+        }
 
         // Quad Damage visual overlay
-        this.quadOverlay.style.opacity = (this.player.quadTime > 0) ? '0.6' : '0';
+        const quadActive = (this.player.quadTime > 0);
+        if (this._lastQuadActive !== quadActive) {
+            this.quadOverlay.style.opacity = quadActive ? '0.6' : '0';
+            this._lastQuadActive = quadActive;
+        }
 
-        // Animate Sarge Face
-        window.quakeTextures.renderSargeFace(
-            this.faceCanvas,
-            h,
-            this.faceLookDir,
-            this.faceDamageTimer > 0
-        );
+        // Animate Sarge Face throttled to ~30 FPS to save main thread CPU for 120 FPS
+        this.faceTimer += dt;
+        if (this.faceTimer >= 0.033) {
+            this.faceTimer = 0;
+            window.quakeTextures.renderSargeFace(
+                this.faceCanvas,
+                h,
+                this.faceLookDir,
+                this.faceDamageTimer > 0
+            );
+        }
     }
 
     updateWeaponBar() {
@@ -471,7 +504,7 @@ class GameEngine {
         }
 
         // 5. HUD update
-        this.updateHUD();
+        this.updateHUD(dt);
     }
 
     render() {
@@ -480,8 +513,24 @@ class GameEngine {
 
     run() {
         const now = performance.now();
-        const dt = Math.min(0.1, (now - this.lastTime) / 1000);
+        const dt = Math.min(0.1, (now - this.lastTime) * 0.001);
         this.lastTime = now;
+
+        // Frame timing & FPS calculation
+        this.frameCount++;
+        if (now - this.lastFpsTime >= 500) { // Update FPS counter every 500ms
+            const fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsTime));
+            const frametimeMs = (1000 / Math.max(1, fps)).toFixed(1);
+            if (this.fpsElement && this.settingsManager && this.settingsManager.settings.showFps) {
+                this.fpsElement.textContent = `${fps} FPS / ${frametimeMs}ms`;
+                if (fps >= 115) this.fpsElement.style.color = '#00ff88';
+                else if (fps >= 90) this.fpsElement.style.color = '#00e5ff';
+                else if (fps >= 60) this.fpsElement.style.color = '#ffbb00';
+                else this.fpsElement.style.color = '#ff3333';
+            }
+            this.frameCount = 0;
+            this.lastFpsTime = now;
+        }
 
         this.update(dt);
         this.render();

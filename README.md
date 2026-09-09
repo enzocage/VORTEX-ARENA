@@ -74,7 +74,12 @@
 * **3D Stereo Spatial Audio**: Richtungs- und distanzabhängige Soundortung von Schritten, Schüssen und Schmerzenslauten.
 * **Gladiator-HUD**: Klassische Ziffernfarben, Speedometer in UPS und animiertes Portrait-Gesicht, das bei Treffern Schmerzgrimassen schneidet und bei niedrigen HP blutig wird.
 * **Tournament Medaillen**: Animierte Pop-in Auszeichnungen (*★ IMPRESSIVE! ★*, *★ HUMILIATION! ★*, *★ EXCELLENT! ★*).
-* **In-Game Optionen (Taste `O`)**: Stufenloser FOV-Slider (70° bis 120° Quake-Pro-View), Mausempfindlichkeit, Lautstärke und Fadenkreuz-Stile.
+* **In-Game Optionen (Taste `O`)**: Stufenloser FOV-Slider (70° bis 120° Quake-Pro-View), Mausempfindlichkeit, Lautstärke, Fadenkreuz-Stile sowie Grafikpresets & Live-FPS-Counter.
+* **120 FPS High-Refresh Engine (Optimiert für Intel Arc 140V & moderne iGPUs)**:
+  * Zero-GC Physikschleife ohne permanente Objekt-Allokationen in der Hauptberechnung.
+  * Geometrie- & Material-Pooling für Partikelsysteme und Decals.
+  * Textur- und 2D-HUD-Throttling zur Entlastung des Haupt-Renderthreads.
+  * Ultra-Performance-Modus mit PixelRatio-1:1-Locking für ruckelfreie 120 FPS bei ca. 8,3 ms Frametime.
 
 ---
 

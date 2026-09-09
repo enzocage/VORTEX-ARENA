@@ -395,6 +395,17 @@ canvas {
     width: fit-content;
 }
 
+#fps-counter {
+    font-size: clamp(16px, 1.6vw, 24px);
+    color: #00ffcc;
+    font-family: 'VT323', monospace;
+    background: rgba(0, 15, 25, 0.7);
+    padding: 2px clamp(6px, 1vw, 12px);
+    border-left: 3px solid #00e5ff;
+    width: fit-content;
+    text-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
+}
+
 /* Scoreboard Overlay (TAB) */
 #scoreboard {
     position: absolute;

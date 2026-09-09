@@ -1047,8 +1047,12 @@ class LevelManager {
     // Check Jump Pads, Teleporters & Pickups
     update(dt, entities, player) {
         // 1. Animate Pickups (spin & bob)
-        const time = performance.now() / 1000;
-        for (const p of this.pickups) {
+        const time = performance.now() * 0.001;
+        const numEntities = entities.length;
+        const numPickups = this.pickups.length;
+
+        for (let i = 0; i < numPickups; i++) {
+            const p = this.pickups[i];
             if (!p.active) {
                 p.respawnTime -= dt;
                 if (p.respawnTime <= 0) {
@@ -1061,10 +1065,11 @@ class LevelManager {
             p.mesh.rotation.y += dt * 2.5;
             p.mesh.position.y = Math.sin(time * 3 + p.position.x) * 0.12;
 
-            // Check touch by player or bot
-            for (const ent of entities) {
+            // Check touch by player or bot (squared distance avoids Math.sqrt)
+            for (let j = 0; j < numEntities; j++) {
+                const ent = entities[j];
                 if (!ent.alive) continue;
-                if (ent.position.distanceTo(p.position) < 1.8) {
+                if (ent.position.distanceToSquared(p.position) < 3.24) { // 1.8^2
                     this.consumePickup(p, ent, player);
                     break;
                 }
@@ -1072,11 +1077,14 @@ class LevelManager {
         }
 
         // 2. Animate Jump Pads & Check Triggers
-        for (const jp of this.jumpPads) {
-            for (const ent of entities) {
+        const numJumpPads = this.jumpPads.length;
+        for (let i = 0; i < numJumpPads; i++) {
+            const jp = this.jumpPads[i];
+            const rSq = jp.radius * jp.radius;
+            for (let j = 0; j < numEntities; j++) {
+                const ent = entities[j];
                 if (!ent.alive) continue;
-                const d = ent.position.distanceTo(jp.position);
-                if (d < jp.radius && Math.abs(ent.position.y - jp.position.y) < 1.2) {
+                if (Math.abs(ent.position.y - jp.position.y) < 1.2 && ent.position.distanceToSquared(jp.position) < rSq) {
                     ent.velocity.copy(jp.targetVelocity);
                     ent.onGround = false;
                     if (ent.isPlayer) {
@@ -1087,10 +1095,14 @@ class LevelManager {
         }
 
         // 3. Check Teleporters
-        for (const tp of this.teleporters) {
-            for (const ent of entities) {
+        const numTeleporters = this.teleporters.length;
+        for (let i = 0; i < numTeleporters; i++) {
+            const tp = this.teleporters[i];
+            const rSq = tp.radius * tp.radius;
+            for (let j = 0; j < numEntities; j++) {
+                const ent = entities[j];
                 if (!ent.alive) continue;
-                if (ent.position.distanceTo(tp.position) < tp.radius) {
+                if (ent.position.distanceToSquared(tp.position) < rSq) {
                     ent.position.copy(tp.destination);
                     ent.velocity.set(0, 0, 0);
                     ent.yaw = tp.destYaw;

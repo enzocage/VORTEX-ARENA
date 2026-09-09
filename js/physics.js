@@ -22,6 +22,11 @@ class QuakePhysics {
         // Player AABB dimensions
         this.playerRadius = 0.5;
         this.playerHeight = 1.8;
+
+        // Reusable vectors to eliminate GC pressure at 120 FPS
+        this._wishDir = new THREE.Vector3();
+        this._axisY = new THREE.Vector3(0, 1, 0);
+        this._moveStep = new THREE.Vector3();
     }
 
     // Process a single physics tick for an entity (player or bot)
@@ -34,8 +39,8 @@ class QuakePhysics {
         // Determine ground status
         entity.onGround = this.checkGround(entity, worldColliders);
 
-        // Movement input vector
-        const wishDir = new THREE.Vector3();
+        // Movement input vector (using reusable vector)
+        const wishDir = this._wishDir.set(0, 0, 0);
         if (input.forward) wishDir.z -= 1;
         if (input.backward) wishDir.z += 1;
         if (input.left) wishDir.x -= 1;
@@ -44,7 +49,7 @@ class QuakePhysics {
         // Rotate wishDir according to entity's yaw
         if (wishDir.lengthSq() > 0) {
             wishDir.normalize();
-            wishDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), entity.yaw);
+            wishDir.applyAxisAngle(this._axisY, entity.yaw);
         }
 
         if (entity.inWater) {
@@ -97,7 +102,8 @@ class QuakePhysics {
     }
 
     checkWater(entity, colliders) {
-        for (const col of colliders) {
+        for (let i = 0; i < colliders.length; i++) {
+            const col = colliders[i];
             if (col.isWater) {
                 if (entity.position.x > col.min.x && entity.position.x < col.max.x &&
                     entity.position.y < col.max.y && entity.position.y + this.playerHeight > col.min.y &&
@@ -152,7 +158,8 @@ class QuakePhysics {
         const feetY = entity.position.y;
         const r = this.playerRadius * 0.7;
 
-        for (const col of colliders) {
+        for (let i = 0; i < colliders.length; i++) {
+            const col = colliders[i];
             if (col.isTrigger) continue;
             // Check if horizontal overlap
             if (entity.position.x + r > col.min.x && entity.position.x - r < col.max.x &&
@@ -170,13 +177,19 @@ class QuakePhysics {
 
     // Collision Detection & Resolution with Stepping
     moveWithCollisions(entity, colliders, dt) {
-        const moveStep = entity.velocity.clone().multiplyScalar(dt);
+        const moveStep = this._moveStep.set(
+            entity.velocity.x * dt,
+            entity.velocity.y * dt,
+            entity.velocity.z * dt
+        );
         const r = this.playerRadius;
         const h = this.playerHeight;
+        const numColliders = colliders.length;
 
         // Move X
         entity.position.x += moveStep.x;
-        for (const col of colliders) {
+        for (let i = 0; i < numColliders; i++) {
+            const col = colliders[i];
             if (col.isTrigger) continue;
             if (this.intersects(entity.position, r, h, col)) {
                 // Check step up
@@ -193,7 +206,8 @@ class QuakePhysics {
 
         // Move Z
         entity.position.z += moveStep.z;
-        for (const col of colliders) {
+        for (let i = 0; i < numColliders; i++) {
+            const col = colliders[i];
             if (col.isTrigger) continue;
             if (this.intersects(entity.position, r, h, col)) {
                 const stepDiff = col.max.y - entity.position.y;
@@ -209,7 +223,8 @@ class QuakePhysics {
 
         // Move Y
         entity.position.y += moveStep.y;
-        for (const col of colliders) {
+        for (let i = 0; i < numColliders; i++) {
+            const col = colliders[i];
             if (col.isTrigger) continue;
             if (this.intersects(entity.position, r, h, col)) {
                 if (moveStep.y > 0) { // Hit ceiling

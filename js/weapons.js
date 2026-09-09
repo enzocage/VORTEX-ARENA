@@ -25,7 +25,22 @@ class WeaponSystem {
         this.particles = [];
         this.beams = [];
         this.decals = []; // Bullet hole & blast mark decals
-        this.maxDecals = 60;
+        this.maxDecals = 30; // Optimized for high frame rates
+        this.maxParticles = 60; // Hard cap on active particles to guarantee 120 FPS
+
+        // Shared reusable geometries and materials for particles to eliminate GC allocation spikes
+        this._boxGeomSmall = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+        this._boxGeomTiny = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+        this._bloodMat = new THREE.MeshBasicMaterial({ color: 0xaa1111 });
+        this._sparkMat = new THREE.MeshBasicMaterial({ color: 0xffea00 });
+        this._plasmaMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        this._fireMat1 = new THREE.MeshBasicMaterial({ color: 0xff4400 });
+        this._fireMat2 = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        this._smokeMat = new THREE.MeshBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.6 });
+        this._bfgMat1 = new THREE.MeshBasicMaterial({ color: 0x00ff44 });
+        this._bfgMat2 = new THREE.MeshBasicMaterial({ color: 0x88ff00 });
+        this._decalGeom = new THREE.PlaneGeometry(0.28, 0.28);
+        this._decalMat = new THREE.MeshBasicMaterial({ color: 0x111111, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
 
         // Viewmodel container attached to camera
         this.viewmodelHolder = new THREE.Group();
@@ -536,101 +551,102 @@ class WeaponSystem {
     }
 
     spawnBFGExplosionVisual(pos) {
-        const light = new THREE.PointLight(0x00ff44, 8, 20);
+        const light = new THREE.PointLight(0x00ff44, 5, 14);
         light.position.copy(pos);
         this.scene.add(light);
-        setTimeout(() => this.scene.remove(light), 250);
+        setTimeout(() => this.scene.remove(light), 150);
 
-        for (let i = 0; i < 45; i++) {
+        const count = Math.min(20, Math.max(5, this.maxParticles - this.particles.length));
+        for (let i = 0; i < count; i++) {
             const vel = new THREE.Vector3(
-                (Math.random() - 0.5) * 16,
-                (Math.random() - 0.2) * 14,
-                (Math.random() - 0.5) * 16
+                (Math.random() - 0.5) * 14,
+                (Math.random() - 0.2) * 12,
+                (Math.random() - 0.5) * 14
             );
             const mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(0.25, 0.25, 0.25),
-                new THREE.MeshBasicMaterial({ color: Math.random() > 0.3 ? 0x00ff44 : 0x88ff00 })
+                this._boxGeomSmall,
+                Math.random() > 0.3 ? this._bfgMat1 : this._bfgMat2
             );
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.6 + Math.random() * 0.4 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.45 + Math.random() * 0.25 });
         }
     }
 
     spawnExplosionVisual(pos) {
         // Flash light
-        const light = new THREE.PointLight(0xff6600, 6, 12);
+        const light = new THREE.PointLight(0xff6600, 4, 10);
         light.position.copy(pos);
         this.scene.add(light);
-        setTimeout(() => this.scene.remove(light), 150);
+        setTimeout(() => this.scene.remove(light), 100);
 
-        // Debris / Fireball particles
-        for (let i = 0; i < 28; i++) {
+        // Debris / Fireball particles using pooled geometries
+        const count = Math.min(16, Math.max(4, this.maxParticles - this.particles.length));
+        for (let i = 0; i < count; i++) {
             const vel = new THREE.Vector3(
-                (Math.random() - 0.5) * 12,
-                (Math.random() - 0.2) * 10,
-                (Math.random() - 0.5) * 12
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.2) * 9,
+                (Math.random() - 0.5) * 10
             );
             const mesh = new THREE.Mesh(
-                new THREE.BoxGeometry(0.18, 0.18, 0.18),
-                new THREE.MeshBasicMaterial({ color: Math.random() > 0.3 ? 0xff4400 : 0xffaa00 })
+                this._boxGeomSmall,
+                Math.random() > 0.3 ? this._fireMat1 : this._fireMat2
             );
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.4 + Math.random() * 0.3 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.35 + Math.random() * 0.2 });
         }
     }
 
     spawnRocketSmoke(pos) {
-        const mesh = new THREE.Mesh(
-            new THREE.BoxGeometry(0.14, 0.14, 0.14),
-            new THREE.MeshBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.6 })
-        );
+        if (this.particles.length >= this.maxParticles) return;
+        const mesh = new THREE.Mesh(this._boxGeomTiny, this._smokeMat);
         mesh.position.copy(pos);
         this.scene.add(mesh);
         this.particles.push({
             mesh,
-            vel: new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() * 0.8), (Math.random() - 0.5) * 0.5),
+            vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() * 0.6), (Math.random() - 0.5) * 0.4),
             age: 0,
-            maxAge: 0.5
+            maxAge: 0.35
         });
     }
 
     spawnPlasmaImpact(pos) {
-        for (let i = 0; i < 14; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8);
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+        const count = Math.min(8, Math.max(2, this.maxParticles - this.particles.length));
+        for (let i = 0; i < count; i++) {
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7);
+            const mesh = new THREE.Mesh(this._boxGeomTiny, this._plasmaMat);
+            mesh.position.copy(pos);
+            this.scene.add(mesh);
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.25 });
+        }
+    }
+
+    spawnBloodParticles(pos) {
+        const count = Math.min(8, Math.max(2, this.maxParticles - this.particles.length));
+        for (let i = 0; i < count; i++) {
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 3.5, (Math.random() - 0.5) * 4);
+            const mesh = new THREE.Mesh(this._boxGeomTiny, this._bloodMat);
             mesh.position.copy(pos);
             this.scene.add(mesh);
             this.particles.push({ mesh, vel, age: 0, maxAge: 0.3 });
         }
     }
 
-    spawnBloodParticles(pos) {
-        for (let i = 0; i < 12; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 4, (Math.random() - 0.5) * 4);
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), new THREE.MeshBasicMaterial({ color: 0xaa1111 }));
-            mesh.position.copy(pos);
-            this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.4 });
-        }
-    }
-
     spawnImpactSparks(pos) {
-        for (let i = 0; i < 6; i++) {
-            const vel = new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 5, (Math.random() - 0.5) * 5);
-            const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xffea00 }));
+        const count = Math.min(4, Math.max(1, this.maxParticles - this.particles.length));
+        for (let i = 0; i < count; i++) {
+            const vel = new THREE.Vector3((Math.random() - 0.5) * 4, Math.random() * 4, (Math.random() - 0.5) * 4);
+            const mesh = new THREE.Mesh(this._boxGeomTiny, this._sparkMat);
             mesh.position.copy(pos);
             this.scene.add(mesh);
-            this.particles.push({ mesh, vel, age: 0, maxAge: 0.25 });
+            this.particles.push({ mesh, vel, age: 0, maxAge: 0.2 });
         }
-        this.addImpactDecal(pos, 0.25, 0x111111);
+        this.addImpactDecal(pos);
     }
 
-    addImpactDecal(pos, size = 0.3, color = 0x111111) {
-        const geom = new THREE.PlaneGeometry(size, size);
-        const mat = new THREE.MeshBasicMaterial({ color: color, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
-        const mesh = new THREE.Mesh(geom, mat);
+    addImpactDecal(pos) {
+        const mesh = new THREE.Mesh(this._decalGeom, this._decalMat);
         mesh.position.copy(pos);
         this.scene.add(mesh);
         this.decals.push(mesh);
@@ -638,8 +654,6 @@ class WeaponSystem {
         if (this.decals.length > this.maxDecals) {
             const oldest = this.decals.shift();
             this.scene.remove(oldest);
-            oldest.geometry.dispose();
-            oldest.material.dispose();
         }
     }
 

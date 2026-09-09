@@ -9,7 +9,9 @@ class SettingsManager {
             masterVolume: 0.8,
             crosshairType: 'cross', // cross, dot, circle
             crosshairColor: '#00ff80',
-            bloodEnabled: true
+            bloodEnabled: true,
+            graphicsQuality: 'ultra_performance', // ultra_performance (120fps arc140v), balanced, high
+            showFps: true
         };
 
         this.loadSettings();
@@ -41,6 +43,28 @@ class SettingsManager {
         if (this.game && this.game.camera) {
             this.game.camera.fov = this.settings.fov;
             this.game.camera.updateProjectionMatrix();
+        }
+
+        if (this.game && this.game.renderer) {
+            // ARC 140V 120 FPS optimization:
+            // High DPI screens render at 2x pixel ratio by default which causes 4x pixel shading load
+            // For rock-solid 120 FPS, pixelRatio is capped according to quality preset
+            if (this.settings.graphicsQuality === 'ultra_performance') {
+                this.game.renderer.setPixelRatio(1);
+                this.game.renderer.shadowMap.enabled = false;
+            } else if (this.settings.graphicsQuality === 'balanced') {
+                this.game.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+                this.game.renderer.shadowMap.enabled = false;
+            } else {
+                this.game.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+                this.game.renderer.shadowMap.enabled = true;
+            }
+            this.game.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        const fpsCounter = document.getElementById('fps-counter');
+        if (fpsCounter) {
+            fpsCounter.style.display = this.settings.showFps ? 'block' : 'none';
         }
 
         if (window.quakeAudio && window.quakeAudio.masterGain) {
@@ -107,6 +131,18 @@ class SettingsManager {
                             <option value="circle" ${this.settings.crosshairType === 'circle' ? 'selected' : ''}>Kreis mit Punkt</option>
                         </select>
                     </div>
+                    <div>
+                        <label style="font-size: 22px; color: #00e5ff; display: block; margin-bottom: 5px;">GRAFIK / PERFORMANCE (120 FPS ARC 140V):</label>
+                        <select id="graphics-select" style="width: 100%; background: #112233; color: #00e5ff; border: 1px solid #00aacc; padding: 6px; font-size: 18px; font-family: 'Teko'; border-radius: 4px;">
+                            <option value="ultra_performance" ${this.settings.graphicsQuality === 'ultra_performance' ? 'selected' : ''}>⚡ Ultra Performance (120 FPS Konsequent - Arc 140V)</option>
+                            <option value="balanced" ${this.settings.graphicsQuality === 'balanced' ? 'selected' : ''}>Ausgewogen (Balanced)</option>
+                            <option value="high" ${this.settings.graphicsQuality === 'high' ? 'selected' : ''}>Hohe Details (High)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                        <input type="checkbox" id="fps-checkbox" ${this.settings.showFps ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="fps-checkbox" style="font-size: 20px; color: #00ff88; cursor: pointer;">FPS- & FRAMETIME-ANZEIGE AKTIVIEREN</label>
+                    </div>
                 </div>
                 <button class="start-btn" id="close-settings-btn" style="width: 100%; font-size: 26px;">SCHLIESSEN & SPEICHERN</button>
             </div>
@@ -134,6 +170,16 @@ class SettingsManager {
 
         document.getElementById('crosshair-select').addEventListener('change', (e) => {
             this.settings.crosshairType = e.target.value;
+            this.applySettings();
+        });
+
+        document.getElementById('graphics-select').addEventListener('change', (e) => {
+            this.settings.graphicsQuality = e.target.value;
+            this.applySettings();
+        });
+
+        document.getElementById('fps-checkbox').addEventListener('change', (e) => {
+            this.settings.showFps = e.target.checked;
             this.applySettings();
         });
 
