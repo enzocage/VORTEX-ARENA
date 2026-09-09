@@ -3,6 +3,9 @@
 
 ![Vortex Arena Cover](assets/splash.jpg)
 
+### 🎮 Jetzt direkt im Browser spielen:
+👉 **Besuche die offizielle GitHub Pages Deployment-Seite: [https://enzocage.github.io/VORTEX-ARENA/](https://enzocage.github.io/VORTEX-ARENA/)**
+
 [![WebGL 3D](https://img.shields.io/badge/Render-WebGL%20%2F%20Three.js%20r128-blue.svg)]()
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20(Pure%20Vanilla%20JS)-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
