@@ -232,9 +232,10 @@ class GameEngine {
         this.lastTime = performance.now();
         this.renderer.domElement.requestPointerLock();
 
-        // Audio announcer: "Fight!"
+        // Audio announcer: "Fight!" & continuous soundtrack loop
         window.quakeAudio.init();
         window.quakeAudio.resume();
+        window.quakeAudio.startMusic();
         window.quakeAudio.announce("Fight!");
 
         this.updateHUD();

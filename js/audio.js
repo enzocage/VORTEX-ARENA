@@ -7,6 +7,8 @@ class QuakeAudio {
         this.masterGain = null;
         this.sfxGain = null;
         this.voiceGain = null;
+        this.musicGain = null;
+        this.bgMusic = null;
         this.initialized = false;
         this.lastHitDing = 0;
     }
@@ -39,10 +41,15 @@ class QuakeAudio {
             this.voiceGain = this.ctx.createGain();
             this.voiceGain.gain.value = 0.95;
 
+            this.musicGain = this.ctx.createGain();
+            this.musicGain.gain.value = 0.75;
+
             // Signal routing: SFX -> Distortion -> Compressor -> Master -> Destination
+            // Music routes cleanly through compressor and master without distortion
             this.sfxGain.connect(this.distortion);
             this.distortion.connect(this.compressor);
             this.voiceGain.connect(this.compressor);
+            this.musicGain.connect(this.compressor);
             this.compressor.connect(this.masterGain);
             this.masterGain.connect(this.ctx.destination);
 
@@ -67,6 +74,52 @@ class QuakeAudio {
     resume() {
         if (this.ctx && this.ctx.state === 'suspended') {
             this.ctx.resume();
+        }
+        if (this.bgMusic && this.bgMusic.paused) {
+            this.bgMusic.play().catch(() => {});
+        }
+    }
+
+    // Start & continuous loop background music (does not restart on respawn/death)
+    startMusic(url = 'https://files.catbox.moe/usysqd.mp3') {
+        if (this.bgMusic) {
+            // Already started and playing; keep playing continuously
+            if (this.bgMusic.paused) {
+                this.bgMusic.play().catch(e => console.log("Music play prevented:", e));
+            }
+            return;
+        }
+
+        try {
+            const audio = new Audio(url);
+            audio.loop = true;
+            audio.crossOrigin = 'anonymous';
+            audio.volume = 0.7;
+
+            // Route audio through Web Audio API node if available, otherwise direct playback
+            if (this.ctx && this.musicGain) {
+                try {
+                    const source = this.ctx.createMediaElementSource(audio);
+                    source.connect(this.musicGain);
+                } catch (e) {
+                    console.warn("MediaElementSource connection fallback to direct audio:", e);
+                }
+            }
+
+            audio.play().catch(err => {
+                console.warn("Audio autoplay blocked, awaiting interaction:", err);
+                const unlock = () => {
+                    audio.play().catch(() => {});
+                    window.removeEventListener('click', unlock);
+                    window.removeEventListener('keydown', unlock);
+                };
+                window.addEventListener('click', unlock, { once: true });
+                window.addEventListener('keydown', unlock, { once: true });
+            });
+
+            this.bgMusic = audio;
+        } catch (e) {
+            console.warn("Failed to load/play background music:", e);
         }
     }
 
@@ -374,8 +427,6 @@ class QuakeAudio {
         soundFunc(gainNode);
     }
 
-    // Legendary BFG10K: High power energy charge & catastrophic blast
-    playBFGFire() {
     // Legendary BFG10K: Apocalypse-level bio-mechanical doom cannon
     playBFGFire() {
         const t = this.ctx.currentTime;
@@ -701,18 +752,6 @@ class QuakeAudio {
         osc.stop(t + 0.09);
     }
 
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 1200;
-        filter.Q.value = 4;
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(this.sfxGain);
-
-        osc.start(t);
-        osc.stop(t + 0.08);
-    }
 
     // Quake Announcer Voice
     announce(text) {

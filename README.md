@@ -113,6 +113,12 @@ cd quake3
 
 ---
 
+## 👥 Credits
+* **Coding & Game Design**: Felix Schmidt
+* **Music / Soundtrack**: Venjent (*Looping In-Game Arena Track: [usysqd.mp3](https://files.catbox.moe/usysqd.mp3)*)
+
+---
+
 ## 📜 Lizenz & Urheberrechtshinweis
 
 Dieses Projekt ist unter der **MIT-Lizenz** lizenziert – freie Nutzung, Modifikation und Weitergabe gestattet.
