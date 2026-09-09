@@ -152,7 +152,9 @@ class WeaponSystem {
 
         // Attach all to viewmodel holder, hide inactive
         for (const [id, model] of Object.entries(this.viewmodels)) {
-            model.position.set(0.28, -0.25, -0.55);
+            // Position prominently in front-right of the player camera
+            model.position.set(0.32, -0.32, -0.62);
+            model.scale.set(1.15, 1.15, 1.15); // Slightly larger for crisp visual feedback
             model.visible = (parseInt(id) === this.currentWeaponId);
             this.viewmodelHolder.add(model);
         }
@@ -164,7 +166,39 @@ class WeaponSystem {
         for (const [key, model] of Object.entries(this.viewmodels)) {
             model.visible = (parseInt(key) === id);
         }
-        window.quakeAudio.playPickup('weapon');
+
+        // Play weapon switch mechanical sound
+        if (window.quakeAudio) {
+            window.quakeAudio.playPickup('weapon');
+        }
+
+        // Show weapon notification banner in center HUD
+        const weapon = this.weapons[id];
+        const banner = document.getElementById('weapon-switch-banner');
+        if (banner && weapon) {
+            const colors = {
+                1: '#aaaaaa', // Gauntlet
+                2: '#ffcc44', // Machinegun
+                3: '#ff8800', // Shotgun
+                4: '#ff3300', // Rocket Launcher
+                5: '#00e5ff', // Railgun
+                6: '#cc00ff', // Plasma Gun
+                7: '#00ff44'  // BFG10K
+            };
+            const col = colors[id] || '#ffd700';
+            banner.textContent = `[ ${id} ]  ${weapon.name.toUpperCase()}`;
+            banner.style.color = col;
+            banner.style.borderColor = col;
+            banner.style.boxShadow = `0 0 25px ${col}`;
+            banner.style.opacity = '1';
+            banner.style.transform = 'translateX(-50%) scale(1.08)';
+
+            clearTimeout(this._weaponBannerTimeout);
+            this._weaponBannerTimeout = setTimeout(() => {
+                banner.style.opacity = '0';
+                banner.style.transform = 'translateX(-50%) scale(0.95)';
+            }, 1200);
+        }
     }
 
     // Fire weapon (defaults to player currentWeaponId or specified weaponId)
@@ -682,7 +716,7 @@ class WeaponSystem {
 
         const currentModel = this.viewmodels[this.currentWeaponId];
         if (currentModel) {
-            currentModel.position.set(0.28 + bobX, -0.25 + bobY, -0.55 + this.recoilZ);
+            currentModel.position.set(0.32 + bobX, -0.32 + bobY, -0.62 + this.recoilZ);
             currentModel.rotation.x = -this.recoilRot;
 
             // Spin gauntlet saw

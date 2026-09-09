@@ -6,6 +6,7 @@ class GameEngine {
         this.container = document.getElementById('canvas-container');
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.scene.add(this.camera);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -192,16 +193,21 @@ class GameEngine {
         });
     }
 
-    startLevel(levelIndex) {
+    startLevel(levelIndex, difficulty = null) {
         this.currentLevelIndex = levelIndex;
+        if (difficulty) {
+            this.difficulty = difficulty;
+        } else if (!this.difficulty) {
+            this.difficulty = 'medium';
+        }
         const levelData = this.levelManager.loadLevel(levelIndex);
         this.fragLimit = levelData.fragLimit;
 
-        document.getElementById('level-title').textContent = levelData.name;
+        document.getElementById('level-title').textContent = `${levelData.name} [${this.difficulty.toUpperCase()}]`;
 
         // Reset Player stats
-        this.player.health = 125;
-        this.player.armor = 50;
+        this.player.health = (this.difficulty === 'easy') ? 150 : 125;
+        this.player.armor = (this.difficulty === 'easy') ? 100 : 50;
         this.player.frags = 0;
         this.player.deaths = 0;
         this.player.quadTime = 0;
@@ -214,8 +220,8 @@ class GameEngine {
         this.player.yaw = sp.yaw;
         this.player.pitch = 0;
 
-        // Spawn Bots
-        this.botManager.spawnBots(levelData.botCount, this.levelManager.spawnPoints);
+        // Spawn Bots with chosen difficulty
+        this.botManager.spawnBots(levelData.botCount, this.levelManager.spawnPoints, this.difficulty);
 
         // Hide modals
         document.getElementById('start-modal').style.display = 'none';

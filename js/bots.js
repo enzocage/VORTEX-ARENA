@@ -32,12 +32,39 @@ class QuakeBot {
         this.shootCooldown = 0.4;
         this.activeWeaponId = 4; // Default Rocket launcher
 
+        // Difficulty modifiers (easy, medium, hard)
+        this.difficulty = 'medium';
+        this.aimAccuracy = 0.85; // 0.45 (easy), 0.85 (medium), 1.0 (hard)
+        this.shootIntervalMin = 0.45;
+        this.shootIntervalRand = 0.55;
+
         // 3D Mesh Representation
         this.mesh = this.createBotMesh(skinColor);
         this.scene.add(this.mesh);
 
         // Fake input object for physics integration
         this.input = { forward: false, backward: false, left: false, right: false, jump: false };
+    }
+
+    setDifficulty(diff) {
+        this.difficulty = diff;
+        if (diff === 'easy') {
+            this.aimAccuracy = 0.42; // Noticeable aim spread, dodges less
+            this.shootIntervalMin = 0.85;
+            this.shootIntervalRand = 0.85;
+            this.health = 80;
+        } else if (diff === 'hard') {
+            this.aimAccuracy = 0.98; // Razor sharp predictive aim, active strafe jumps
+            this.shootIntervalMin = 0.28;
+            this.shootIntervalRand = 0.35;
+            this.health = 125;
+        } else {
+            // medium default
+            this.aimAccuracy = 0.82;
+            this.shootIntervalMin = 0.48;
+            this.shootIntervalRand = 0.55;
+            this.health = 100;
+        }
     }
 
     createBotMesh(color) {
@@ -227,6 +254,14 @@ class QuakeBot {
         const botEye = this.position.clone().add(new THREE.Vector3(0, 1.2, 0));
         const toTarget = predictedPos.sub(botEye);
 
+        // Aim error based on difficulty
+        const spreadFactor = (1.0 - this.aimAccuracy) * 0.35;
+        if (spreadFactor > 0) {
+            toTarget.x += (Math.random() - 0.5) * dist * spreadFactor;
+            toTarget.y += (Math.random() - 0.5) * dist * spreadFactor * 0.5;
+            toTarget.z += (Math.random() - 0.5) * dist * spreadFactor;
+        }
+
         this.yaw = Math.atan2(-toTarget.x, -toTarget.z);
         this.aimDirection.copy(toTarget).normalize();
 
@@ -235,7 +270,8 @@ class QuakeBot {
         if (this.strafeTimer <= 0) {
             this.strafeTimer = 0.35 + Math.random() * 0.65;
             this.strafeDir = Math.random() > 0.4 ? this.strafeDir : -this.strafeDir;
-            if (Math.random() < 0.5 && this.onGround) {
+            const jumpChance = (this.difficulty === 'hard') ? 0.6 : ((this.difficulty === 'easy') ? 0.15 : 0.35);
+            if (Math.random() < jumpChance && this.onGround) {
                 this.input.jump = true; // Bunny hop dodge
             }
         }
@@ -258,12 +294,12 @@ class QuakeBot {
             this.activeWeaponId = 3; // Shotgun point-blank
         }
 
-        // Fire rate & execution
+        // Fire rate & execution based on difficulty
         this.shootCooldown -= dt;
         if (this.shootCooldown <= 0) {
             const hasQuad = (this.quadTime > 0);
             weaponSystem.fire(this, allEntities, colliders, hasQuad, this.activeWeaponId);
-            this.shootCooldown = 0.45 + Math.random() * 0.55;
+            this.shootCooldown = this.shootIntervalMin + Math.random() * this.shootIntervalRand;
         }
     }
 
@@ -309,7 +345,7 @@ class BotManager {
         this.skinColors = [0x336633, 0x553333, 0x334466, 0x664422, 0x443366, 0x224444];
     }
 
-    spawnBots(count, spawnPoints) {
+    spawnBots(count, spawnPoints, difficulty = 'medium') {
         this.bots.forEach(b => {
             this.scene.remove(b.mesh);
         });
@@ -319,6 +355,7 @@ class BotManager {
             const name = this.botNames[i % this.botNames.length];
             const color = this.skinColors[i % this.skinColors.length];
             const bot = new QuakeBot(this.scene, name, color);
+            bot.setDifficulty(difficulty);
             bot.respawn(spawnPoints);
             this.bots.push(bot);
         }

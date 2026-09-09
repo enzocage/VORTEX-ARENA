@@ -26,6 +26,7 @@
     <!-- Announcer Banner & Medals -->
     <div id="announcer-banner"></div>
     <div id="medal-container"></div>
+    <div id="weapon-switch-banner"></div>
 
     <!-- Top Left: Level & Frag Info -->
     <div id="top-bar">
@@ -144,6 +145,16 @@
                 </div>
             </div>
 
+            <!-- Difficulty Selector (Leicht / Mittel / Schwer) -->
+            <div style="margin: clamp(4px, 0.8vh, 8px) 0;">
+                <label style="color:#00e5ff; font-size: clamp(14px, 1.4vw, 18px); font-weight: bold; margin-bottom: 3px; display:block;">SCHWIERIGKEITSGRAD:</label>
+                <div style="display: flex; gap: clamp(4px, 0.8vw, 8px); justify-content: center;">
+                    <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">LEICHT</button>
+                    <button class="diff-btn selected" id="diff-medium" onclick="setDifficulty('medium')">MITTEL</button>
+                    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">SCHWER</button>
+                </div>
+            </div>
+
             <div class="instructions-grid compact-instructions">
                 <div><strong>WASD</strong> : Move</div>
                 <div><strong>Maus</strong> : Aim & Look</div>
@@ -198,6 +209,7 @@
 
     <script>
         let selectedLevelIdx = 1;
+        let currentDifficulty = 'medium';
         let game = null;
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -218,9 +230,16 @@
             btn.classList.add('selected');
         }
 
+        function setDifficulty(diff) {
+            currentDifficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+            const btn = document.getElementById(`diff-${diff}`);
+            if (btn) btn.classList.add('selected');
+        }
+
         function enterArena() {
             if (game) {
-                game.startLevel(selectedLevelIdx);
+                game.startLevel(selectedLevelIdx, currentDifficulty);
             }
         }
 
