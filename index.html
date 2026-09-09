@@ -146,12 +146,12 @@
             </div>
 
             <!-- Difficulty Selector (Leicht / Mittel / Schwer) -->
-            <div style="margin: clamp(4px, 0.8vh, 8px) 0;">
+            <div style="margin: clamp(4px, 0.8vh, 8px) 0; position: relative; z-index: 105;">
                 <label style="color:#00e5ff; font-size: clamp(14px, 1.4vw, 18px); font-weight: bold; margin-bottom: 3px; display:block;">SCHWIERIGKEITSGRAD:</label>
-                <div style="display: flex; gap: clamp(4px, 0.8vw, 8px); justify-content: center;">
-                    <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">LEICHT</button>
-                    <button class="diff-btn selected" id="diff-medium" onclick="setDifficulty('medium')">MITTEL</button>
-                    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">SCHWER</button>
+                <div style="display: flex; gap: clamp(4px, 0.8vw, 8px); justify-content: center; position: relative; z-index: 106;">
+                    <button type="button" class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">LEICHT</button>
+                    <button type="button" class="diff-btn selected" id="diff-medium" onclick="setDifficulty('medium')">MITTEL</button>
+                    <button type="button" class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">SCHWER</button>
                 </div>
             </div>
 
@@ -236,6 +236,19 @@
             const btn = document.getElementById(`diff-${diff}`);
             if (btn) btn.classList.add('selected');
         }
+        window.setDifficulty = setDifficulty;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            ['easy', 'medium', 'hard'].forEach(d => {
+                const b = document.getElementById(`diff-${d}`);
+                if (b) {
+                    b.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        setDifficulty(d);
+                    });
+                }
+            });
+        });
 
         function enterArena() {
             if (game) {
