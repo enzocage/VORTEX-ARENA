@@ -262,8 +262,7 @@ class QuakeBot {
         this.shootCooldown -= dt;
         if (this.shootCooldown <= 0) {
             const hasQuad = (this.quadTime > 0);
-            weaponSystem.currentWeaponId = this.activeWeaponId;
-            weaponSystem.fire(this, allEntities, colliders, hasQuad);
+            weaponSystem.fire(this, allEntities, colliders, hasQuad, this.activeWeaponId);
             this.shootCooldown = 0.45 + Math.random() * 0.55;
         }
     }

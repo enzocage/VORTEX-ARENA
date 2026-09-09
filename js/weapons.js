@@ -167,17 +167,20 @@ class WeaponSystem {
         window.quakeAudio.playPickup('weapon');
     }
 
-    // Fire current active weapon
-    fire(shooter, targets, colliders, isQuadDamage = false) {
-        const weapon = this.weapons[this.currentWeaponId];
+    // Fire weapon (defaults to player currentWeaponId or specified weaponId)
+    fire(shooter, targets, colliders, isQuadDamage = false, weaponIdOverride = null) {
+        const weaponId = (shooter.isPlayer ? this.currentWeaponId : (weaponIdOverride || shooter.activeWeaponId || this.currentWeaponId));
+        const weapon = this.weapons[weaponId];
         const now = performance.now() / 1000;
 
-        if (now - this.lastFireTime < weapon.fireRate) return false;
+        if (shooter.isPlayer && (now - this.lastFireTime < weapon.fireRate)) return false;
         if (shooter.isPlayer && weapon.ammo <= 0) return false;
 
-        this.lastFireTime = now;
-        if (shooter.isPlayer && weapon.ammo !== Infinity) {
-            weapon.ammo--;
+        if (shooter.isPlayer) {
+            this.lastFireTime = now;
+            if (weapon.ammo !== Infinity) {
+                weapon.ammo--;
+            }
         }
 
         // Trigger viewmodel recoil

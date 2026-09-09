@@ -108,7 +108,7 @@ class GameEngine {
         document.addEventListener('mousemove', (e) => {
             if (!this.isPointerLocked || !this.player.alive) return;
 
-            const sensitivity = 0.0022;
+            const sensitivity = (this.settingsManager && this.settingsManager.settings) ? this.settingsManager.settings.sensitivity : 0.0022;
             this.player.yaw -= e.movementX * sensitivity;
             this.player.pitch -= e.movementY * sensitivity;
 
@@ -220,6 +220,7 @@ class GameEngine {
         document.getElementById('level-complete-modal').style.display = 'none';
 
         this.matchActive = true;
+        this.lastTime = performance.now();
         this.renderer.domElement.requestPointerLock();
 
         // Audio announcer: "Fight!"

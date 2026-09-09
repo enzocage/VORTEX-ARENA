@@ -73,6 +73,15 @@ class QuakePhysics {
         // Move entity with collision detection against world geometry
         this.moveWithCollisions(entity, worldColliders, dt);
 
+        // Re-check and latch ground status after movement to prevent 1-frame air/ground oscillation jitter
+        if (!input.jump || entity.velocity.y <= 0) {
+            const groundedAfter = this.checkGround(entity, worldColliders);
+            if (groundedAfter) {
+                entity.onGround = true;
+                entity.velocity.y = 0;
+            }
+        }
+
         // Check for falling into void
         if (entity.position.y < -35) {
             entity.takeDamage(999, 'the void', 0);
@@ -191,7 +200,8 @@ class QuakePhysics {
         for (let i = 0; i < numColliders; i++) {
             const col = colliders[i];
             if (col.isTrigger) continue;
-            if (this.intersects(entity.position, r, h, col)) {
+            // Elevate bottom by 0.05 during horizontal check so entity never collides laterally with floor it stands on
+            if (this.intersectsHorizontal(entity.position, r, h, col)) {
                 // Check step up
                 const stepDiff = col.max.y - entity.position.y;
                 if (entity.onGround && stepDiff > 0 && stepDiff <= this.stepHeight) {
@@ -209,7 +219,7 @@ class QuakePhysics {
         for (let i = 0; i < numColliders; i++) {
             const col = colliders[i];
             if (col.isTrigger) continue;
-            if (this.intersects(entity.position, r, h, col)) {
+            if (this.intersectsHorizontal(entity.position, r, h, col)) {
                 const stepDiff = col.max.y - entity.position.y;
                 if (entity.onGround && stepDiff > 0 && stepDiff <= this.stepHeight) {
                     entity.position.y = col.max.y;
@@ -242,6 +252,13 @@ class QuakePhysics {
     intersects(pos, r, h, box) {
         return (pos.x + r > box.min.x && pos.x - r < box.max.x &&
                 pos.y + h > box.min.y && pos.y < box.max.y &&
+                pos.z + r > box.min.z && pos.z - r < box.max.z);
+    }
+
+    // Horizontal check with slight vertical skin offset so standing on floor doesn't trigger lateral wall hit
+    intersectsHorizontal(pos, r, h, box) {
+        return (pos.x + r > box.min.x && pos.x - r < box.max.x &&
+                pos.y + h > box.min.y && (pos.y + 0.05) < box.max.y &&
                 pos.z + r > box.min.z && pos.z - r < box.max.z);
     }
 }
