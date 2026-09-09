@@ -200,6 +200,33 @@ canvas {
     white-space: nowrap;
 }
 
+#autowalk-banner {
+    display: none;
+    position: absolute;
+    bottom: clamp(125px, 18vh, 165px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(14px, 1.4vw, 20px);
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #00ffaa;
+    text-shadow: 0 0 10px rgba(0, 255, 170, 0.8), 1px 1px 2px #000;
+    pointer-events: none;
+    z-index: 28;
+    background: rgba(10, 25, 18, 0.85);
+    padding: clamp(2px, 0.5vh, 5px) clamp(12px, 1.5vw, 22px);
+    border: 1.5px solid #00ffaa;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+    white-space: nowrap;
+    animation: autowalkPulse 1.2s infinite alternate;
+}
+
+@keyframes autowalkPulse {
+    from { opacity: 0.8; box-shadow: 0 0 8px rgba(0, 255, 170, 0.3); }
+    to { opacity: 1.0; box-shadow: 0 0 18px rgba(0, 255, 170, 0.7); }
+}
+
 .quake-medal {
     background: linear-gradient(180deg, #ffd700 0%, #ff8800 100%);
     border: 2px solid #fff;

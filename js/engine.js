@@ -39,7 +39,8 @@ class GameEngine {
             left: false,
             right: false,
             jump: false,
-            fire: false
+            fire: false,
+            autoForward: false
         };
 
         // Systems
@@ -152,11 +153,21 @@ class GameEngine {
 
         // Keyboard Controls
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.input.forward = true;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.input.backward = true;
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') {
+                this.input.forward = true;
+            }
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+                this.input.backward = true;
+                this.setAutoWalk(false); // Pressing back stops auto-walk
+            }
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.input.left = true;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.input.right = true;
             if (e.code === 'Space') this.input.jump = true;
+
+            // Auto-walk toggle: Key C or NumLock
+            if (e.code === 'KeyC' || e.code === 'NumLock') {
+                this.toggleAutoWalk();
+            }
 
             // Number keys 1-7 for weapons
             if (e.key >= '1' && e.key <= '7') {
@@ -191,6 +202,18 @@ class GameEngine {
                 this.showScoreboard(false);
             }
         });
+    }
+
+    toggleAutoWalk() {
+        this.setAutoWalk(!this.input.autoForward);
+    }
+
+    setAutoWalk(enable) {
+        this.input.autoForward = enable;
+        const banner = document.getElementById('autowalk-banner');
+        if (banner) {
+            banner.style.display = enable ? 'block' : 'none';
+        }
     }
 
     startLevel(levelIndex, difficulty = null) {

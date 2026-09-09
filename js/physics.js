@@ -41,7 +41,7 @@ class QuakePhysics {
 
         // Movement input vector (using reusable vector)
         const wishDir = this._wishDir.set(0, 0, 0);
-        if (input.forward) wishDir.z -= 1;
+        if (input.forward || input.autoForward) wishDir.z -= 1;
         if (input.backward) wishDir.z += 1;
         if (input.left) wishDir.x -= 1;
         if (input.right) wishDir.x += 1;

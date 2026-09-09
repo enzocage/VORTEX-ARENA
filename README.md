@@ -87,7 +87,8 @@
 
 | Taste | Aktion |
 | :--- | :--- |
-| **W, A, S, D** / **Pfeiltasten** | Fortbewegung |
+| **W, A, S, D** / **Pfeiltasten** | Fortbewegung (**S**: Stoppt automatisches Gehen) |
+| **Taste C** / **NumLock** | **Automatisches Gehen an / aus** (Auto-Walk / Auto-Forward) |
 | **Maus** | Umschauen (Pointer Lock) |
 | **Linksklick** | Waffe abfeuern |
 | **Leertaste** | Springen / Strafe-Jumping / Auftauchen im Wasser |
